@@ -577,6 +577,11 @@ function applyCert(p, meta, typeOverride){
   // логотипи спонсорів
   applySponsors(cert);
 }
+function renderPreview(){
+  const meta=currentMeta();
+  const p=state.players[currentPlayerIdx]||null;
+  applyCert(p, meta, null);
+}
 
 /* ====== ЛОГОТИПИ СПОНСОРІВ ====== */
 function applySponsors(cert){
