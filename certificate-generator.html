@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор Сертифікатів — Smart Chess System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#12211a; --panel:#1b2f26; --panel2:#233b30; --line:#2f4a3c;
+    --gold:#d4af37; --gold-dim:#9d8330; --green:#3f8f5f; --text:#e8ede9;
+    --text-dim:#9db0a5; --danger:#c9564b; --ok:#5fa876;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);padding:20px;min-height:100vh;}
+  .container{max-width:1300px;margin:0 auto;}
+  header.top{text-align:center;margin-bottom:30px;}
+  header.top h1{font-size:2em;color:var(--gold);margin-bottom:6px;}
+  header.top p{color:var(--text-dim);}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:20px;}
+  .card h2{color:var(--gold);font-size:1.3em;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:960px){.grid2{grid-template-columns:1fr;}}
+  label{display:block;color:var(--text-dim);font-size:.9em;margin-bottom:6px;font-weight:600;}
+  input[type=file]{display:none;}
+  .file-label{display:block;padding:12px;background:var(--panel2);border:1px dashed var(--line);border-radius:8px;text-align:center;cursor:pointer;transition:.2s;color:var(--text);}
+  .file-label:hover{border-color:var(--gold);}
+  .file-label.loaded{border-color:var(--ok);border-style:solid;color:var(--ok);}
+  .field{margin-bottom:16px;}
+  input[type=text],textarea{width:100%;padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:inherit;font-size:.9em;}
+  input:focus,textarea:focus{outline:1px solid var(--gold);}
+  textarea{resize:vertical;min-height:70px;}
+  .btn{padding:11px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.9em;transition:.2s;}
+  .btn-primary{background:var(--gold);color:#12211a;}
+  .btn-primary:hover{background:#e0c04a;}
+  .btn-secondary{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);}
+  .btn-secondary:hover{background:rgba(212,175,55,.1);}
+  .btn-send{background:var(--green);color:#fff;}
+  .btn-send:hover{background:#4aa06e;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+  .status{padding:12px;border-radius:8px;margin-top:14px;font-size:.9em;display:none;}
+  .status.show{display:block;}
+  .status.ok{background:rgba(95,168,118,.15);color:var(--ok);border:1px solid var(--ok);}
+  .status.err{background:rgba(201,86,75,.15);color:var(--danger);border:1px solid var(--danger);}
+  .status.info{background:rgba(63,143,95,.12);color:var(--text-dim);border:1px solid var(--line);}
+  .info-row{display:grid;grid-template-columns:130px 1fr;gap:10px;font-size:.9em;margin-bottom:6px;}
+  .info-label{color:var(--gold-dim);font-weight:600;}
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap;}
+  .tab{padding:10px 16px;background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-weight:600;border-bottom:3px solid transparent;}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .plist{max-height:420px;overflow-y:auto;}
+  .prow{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--panel2);border-radius:6px;margin-bottom:6px;font-size:.9em;gap:10px;}
+  .prow.dim{opacity:.55;}
+  .pname{font-weight:600;}
+  .pmeta{color:var(--text-dim);font-size:.85em;}
+  .badge{padding:3px 9px;border-radius:10px;font-size:.75em;font-weight:600;white-space:nowrap;}
+  .badge.ready{background:rgba(95,168,118,.2);color:var(--ok);}
+  .badge.no{background:rgba(212,175,55,.15);color:var(--gold);}
+  .badge.sent{background:var(--green);color:#fff;}
+  .badge.fail{background:rgba(201,86,75,.2);color:var(--danger);}
+  .spinner{border:3px solid var(--line);border-top:3px solid var(--gold);border-radius:50%;width:26px;height:26px;animation:spin 1s linear infinite;margin:10px auto;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .type-select{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:5px 8px;border-radius:5px;font-size:.85em;}
+
+  /* ===== СЕРТИФІКАТ ===== */
+  .cert-wrap{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .cert{
+    width:100%;aspect-ratio:297/210;position:relative;
+    background:
+      /* шаховий патерн у клітинку, дуже делікатний */
+      repeating-conic-gradient(var(--c-tint,rgba(212,175,55,.045)) 0% 25%, transparent 0% 50%) 0 0 / var(--sq,26px) var(--sq,26px),
+      linear-gradient(135deg, var(--c-bg1,#fdfbf3) 0%, var(--c-bg2,#f4efe0) 100%);
+    color:var(--c-ink,#1e2b22);
+    font-family:Georgia,'Times New Roman',serif;
+    border:10px solid var(--c-frame,#12211a);overflow:hidden;
+  }
+  /* вертикальна орієнтація */
+  .cert.portrait{aspect-ratio:210/297;}
+  /* декоративні рамки */
+  .cert::before{content:'';position:absolute;inset:12px;border:2px solid var(--c-accent,#d4af37);border-radius:3px;pointer-events:none;z-index:1;}
+  .cert::after{content:'';position:absolute;inset:18px;border:1px solid rgba(30,43,34,.22);pointer-events:none;z-index:1;}
+
+  /* внутрішній блок з трьома зонами — flex, без absolute-накладань */
+  .cert-inner{position:absolute;inset:26px;display:flex;flex-direction:column;
+    align-items:center;text-align:center;z-index:2;padding:2% 4%;}
+
+  /* водяний знак-кінь по центру */
+  .cert-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-48%);
+    font-size:clamp(120px,32vw,260px);color:var(--c-accent,#d4af37);opacity:.06;
+    z-index:0;pointer-events:none;line-height:1;}
+
+  /* кутові шахові фігури */
+  .cert-corner{position:absolute;font-size:clamp(16px,3.2vw,30px);color:var(--c-accent,#d4af37);opacity:.55;z-index:2;}
+  .cert-corner.tl{top:26px;left:30px;} .cert-corner.tr{top:26px;right:30px;transform:scaleX(-1);}
+  .cert-corner.bl{bottom:26px;left:30px;transform:scaleY(-1);} .cert-corner.br{bottom:26px;right:30px;transform:scale(-1,-1);}
+
+  /* ЗОНА 1 — шапка */
+  .cert-head{flex:0 0 auto;width:100%;}
+  .cert-org{font-size:clamp(9px,1.6vw,13px);letter-spacing:2px;text-transform:uppercase;color:var(--c-accent2,#9d8330);font-weight:bold;}
+  .cert-topline{font-size:clamp(9px,1.7vw,14px);color:var(--c-accent,#d4af37);letter-spacing:3px;margin-top:4px;opacity:.75;}
+
+  /* ЗОНА 2 — центр (займає весь вільний простір, вміст центрований) */
+  .cert-mid{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:0;gap:1.5%;}
+  .cert-medal{width:clamp(30px,6vw,48px);height:clamp(30px,6vw,48px);border-radius:50%;
+    background:linear-gradient(135deg,var(--c-accent,#d4af37),var(--c-accent2,#9d8330));
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    font-size:clamp(15px,3.4vw,26px);box-shadow:0 2px 8px rgba(0,0,0,.2);flex-shrink:0;
+    border:2px solid rgba(255,255,255,.35);}
+  .cert-title{font-size:clamp(20px,5vw,42px);font-weight:bold;letter-spacing:2px;color:var(--c-ink,#12211a);line-height:1;}
+  .cert-type{font-size:clamp(10px,2.3vw,18px);color:var(--c-accent2,#9d8330);font-weight:bold;letter-spacing:1px;}
+  .cert-divider{font-size:clamp(9px,1.9vw,15px);color:var(--c-accent,#d4af37);letter-spacing:4px;opacity:.7;}
+  .cert-sub{font-size:clamp(9px,1.5vw,12px);color:#5a6b5f;}
+  .cert-name{font-size:clamp(17px,4vw,32px);font-weight:bold;color:var(--c-ink,#12211a);padding-bottom:1%;border-bottom:2px solid var(--c-accent,#d4af37);}
+  .cert-desc{font-size:clamp(8px,1.55vw,13px);color:#3a4a40;max-width:82%;line-height:1.45;}
+
+  /* ЗОНА 3 — футер (притиснутий до низу flex-ом, БЕЗ absolute) */
+  .cert-foot{flex:0 0 auto;width:100%;display:flex;justify-content:space-between;align-items:flex-end;
+    font-size:clamp(8px,1.35vw,12px);color:#4a5a50;padding-top:2%;}
+  .cert-fcol{text-align:center;flex:1;}
+  .cert-fline{border-top:1px solid #8a9a90;padding-top:4px;margin-top:18px;}
+  .cert-seal{font-size:clamp(14px,3vw,26px);color:var(--c-accent,#d4af37);opacity:.7;}
+
+  /* панель вибору вигляду */
+  .style-panel{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;background:var(--panel2);border-radius:8px;}
+  .style-group{display:flex;flex-direction:column;gap:6px;}
+  .style-group>span{font-size:.78em;color:var(--text-dim);font-weight:600;}
+  .swatches{display:flex;gap:6px;}
+  .swatch{width:26px;height:26px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:.15s;}
+  .swatch.active{border-color:#fff;transform:scale(1.1);}
+  .orient-btns{display:flex;gap:6px;}
+  .orient-btn{padding:6px 12px;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text-dim);cursor:pointer;font-size:.82em;}
+  .prow.selected{border:1px solid var(--gold);background:rgba(212,175,55,.08);}
+  .orient-btn.active{border-color:var(--gold);color:var(--gold);}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="top">
+    <h1>🏆 Генератор Сертифікатів</h1>
+    <p>Турнірне управління · КЗ ДЮСШ "Дебют"</p>
+  </header>
+
+  <div class="grid2">
+    <!-- ЛІВА: завантаження -->
+    <div class="card">
+      <h2>📁 Дані</h2>
+      <div class="field">
+        <label>1️⃣ Результати турніру (Chess-Results .xlsx)</label>
+        <input type="file" id="resultsFile" accept=".xlsx,.xls">
+        <label for="resultsFile" class="file-label" id="resultsLabel">Обрати файл результатів</label>
+      </div>
+      <div class="field">
+        <label>2️⃣ Контакти учасників (Google Forms .xlsx)</label>
+        <input type="file" id="contactsFile" accept=".xlsx,.xls">
+        <label for="contactsFile" class="file-label" id="contactsLabel">Обрати файл контактів</label>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="processFiles()">✓ Обробити файли</button>
+      </div>
+      <div class="status" id="uploadStatus"></div>
+
+      <div id="metaEdit" style="display:none;margin-top:18px;">
+        <h2 style="font-size:1.1em;">🎯 Інформація турніру <span style="font-size:.7em;color:var(--text-dim);">(можна редагувати)</span></h2>
+        <div class="field"><label>Назва</label><input type="text" id="mTournament"></div>
+        <div class="field"><label>Дата</label><input type="text" id="mDate"></div>
+        <div class="field"><label>Місце</label><input type="text" id="mLocation"></div>
+        <div class="field"><label>Головний арбітр</label><input type="text" id="mArbiter"></div>
+        <div class="field"><label>Організація (підпис)</label><input type="text" id="mOrg" value='КЗ ДЮСШ "Дебют"'></div>
+        <div class="field"><label>📝 Опис / за що (необов'язково)</label>
+          <textarea id="mDesc" placeholder="Напр.: За переконливий виступ та продемонстровану майстерність гри в шахи"></textarea></div>
+        <div class="btn-row"><button class="btn btn-secondary" onclick="renderPreview()">↻ Оновити перегляд</button></div>
+      </div>
+    </div>
+
+    <!-- ПРАВА: перегляд -->
+    <div class="card">
+      <h2>👁️ Перегляд</h2>
+      <div class="style-panel">
+        <div class="style-group">
+          <span>Колірна гама</span>
+          <div class="swatches" id="themeSwatches"></div>
+        </div>
+        <div class="style-group">
+          <span>Орієнтація</span>
+          <div class="orient-btns">
+            <button class="orient-btn active" id="orientH" onclick="setOrient('landscape')">▭ Горизонт.</button>
+            <button class="orient-btn" id="orientV" onclick="setOrient('portrait')">▯ Вертик.</button>
+          </div>
+        </div>
+        <div class="style-group" style="color:var(--text-dim);font-size:.82em;align-self:flex-end;padding-bottom:4px;">
+          👆 Клікніть на учасника в списку щоб побачити його грамоту
+        </div>
+      </div>
+      <div class="cert-wrap">
+        <div class="cert" id="certTemplate" style="--c-accent:#d4af37;--c-accent2:#9d8330;">
+          <div class="cert-watermark">♞</div>
+          <span class="cert-corner tl">♜</span><span class="cert-corner tr">♞</span>
+          <span class="cert-corner bl">♝</span><span class="cert-corner br">♛</span>
+          <div class="cert-inner">
+            <div class="cert-head">
+              <div class="cert-org" id="cOrg">КЗ ДЮСШ "ДЕБЮТ"</div>
+              <div class="cert-topline">♟ ♞ ♝ ♜ ♛ ♚ ♛ ♜ ♝ ♞ ♟</div>
+            </div>
+            <div class="cert-mid">
+              <div class="cert-medal" id="cMedal">★</div>
+              <div class="cert-title">ГРАМОТА</div>
+              <div class="cert-type" id="cType">ЗА УЧАСТЬ</div>
+              <div class="cert-divider">♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜</div>
+              <div class="cert-sub">нагороджується</div>
+              <div class="cert-name" id="cName">Прізвище, Ім'я</div>
+              <div class="cert-desc" id="cDesc">За участь у турнірі та продемонстровані навички гри в шахи</div>
+            </div>
+            <div class="cert-foot">
+              <div class="cert-fcol"><div class="cert-fline" id="cArbiter">Головний арбітр</div></div>
+              <div class="cert-fcol cert-seal">♚</div>
+              <div class="cert-fcol"><div class="cert-fline" id="cDate">Дата</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="downloadOnePreview()">⬇️ PDF цього перегляду</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- НИЗ: учасники + розсилка -->
+  <div class="card">
+    <h2>📧 Учасники та розсилка</h2>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(event,'tab-list')">📋 Список</button>
+      <button class="tab" onclick="switchTab(event,'tab-send')">✉️ Розсилка Email</button>
+      <button class="tab" onclick="switchTab(event,'tab-bulk')">📥 Завантажити всі</button>
+    </div>
+
+    <div id="tab-list" class="tab-content active">
+      <div class="status info show">Завантажте обидва файли й натисніть «Обробити». Тип грамоти можна змінювати для кожного.</div>
+      <div class="plist" id="listContainer" style="margin-top:14px;"></div>
+    </div>
+
+    <div id="tab-send" class="tab-content">
+      <div class="status info show">Сертифікат надсилається як <b>PDF-вкладення</b> тим, у кого є email у файлі контактів.</div>
+      <div class="plist" id="sendContainer" style="margin-top:14px;"></div>
+      <div class="btn-row">
+        <button class="btn btn-send" id="sendBtn" onclick="sendAll()" disabled>🚀 Надіслати всім з email</button>
+      </div>
+      <div class="spinner" id="sendSpinner" style="display:none;"></div>
+      <div class="status" id="sendStatus"></div>
+    </div>
+
+    <div id="tab-bulk" class="tab-content">
+      <div class="status info show">Завантажити всі сертифікати одним ZIP-архівом (PDF-файли всередині).</div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-primary" id="bulkBtn" onclick="downloadAllZip()" disabled>📥 Завантажити ZIP (усі PDF)</button>
+      </div>
+      <div class="spinner" id="bulkSpinner" style="display:none;"></div>
+      <div class="status" id="bulkStatus"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== РОЗСИЛКА ======
+   Листи надсилає Netlify-функція /.netlify/functions/send-cert
+   через ваш Gmail. Пароль додатку зберігається в захищених
+   змінних Netlify (не в цьому коді). Див. інструкцію в README. */
+
+/* ====== ТИПИ ГРАМОТ ====== */
+const CERT_TYPES = {
+  place1:{label:'ПЕРШЕ МІСЦЕ', medal:'1', a:'#d4af37', b:'#9d8330'},
+  place2:{label:'ДРУГЕ МІСЦЕ', medal:'2', a:'#c7ccd0', b:'#7d848a'},
+  place3:{label:'ТРЕТЄ МІСЦЕ', medal:'3', a:'#c98a5c', b:'#8a5a34'},
+  participation:{label:'ЗА УЧАСТЬ', medal:'♞', a:'#5f8f7a', b:'#3a5a4a'},
+  best:{label:'НАЙКРАЩИЙ РЕЗУЛЬТАТ', medal:'★', a:'#3f8f5f', b:'#2a604a'},
+  bestGirl:{label:'НАЙКРАЩА ДІВЧИНА', medal:'♛', a:'#c98fae', b:'#8a4a68'},
+};
+
+/* ====== КОЛІРНІ ГАМИ ====== */
+const THEMES = {
+  green:  {name:'Класична зелена', frame:'#12211a', bg1:'#fdfbf3', bg2:'#f4efe0', ink:'#1e2b22', tint:'rgba(212,175,55,.045)', accent:'#d4af37', accent2:'#9d8330'},
+  navy:   {name:'Синьо-золота',    frame:'#16233d', bg1:'#fbfcff', bg2:'#eef2fa', ink:'#1a2740', tint:'rgba(199,164,74,.05)', accent:'#c7a44a', accent2:'#8a6d28'},
+  burgundy:{name:'Бордо-золота',   frame:'#3a1520', bg1:'#fffbf9', bg2:'#f7ece9', ink:'#3a1a22', tint:'rgba(180,120,90,.05)', accent:'#c98a5c', accent2:'#8a4a34'},
+  royal:  {name:'Фіолетова',       frame:'#2a1a3d', bg1:'#fdfbff', bg2:'#f2ecf8', ink:'#2a1a3d', tint:'rgba(150,110,190,.05)', accent:'#9b6dc7', accent2:'#5a3a8a'},
+  graphite:{name:'Графіт-срібло',  frame:'#22262b', bg1:'#fcfcfd', bg2:'#eef0f2', ink:'#22262b', tint:'rgba(120,130,140,.05)', accent:'#8a949c', accent2:'#5a636b'},
+};
+let currentTheme = 'green';
+let currentOrient = 'landscape';
+
+let state = { tournament:{}, players:[], contacts:[] };
+
+/* ====== ЗАВАНТАЖЕННЯ ФАЙЛІВ ====== */
+document.getElementById('resultsFile').addEventListener('change', e=>{
+  const f=e.target.files[0]; const l=document.getElementById('resultsLabel');
+  if(f){ l.textContent='✓ '+f.name; l.classList.add('loaded'); }
+});
+document.getElementById('contactsFile').addEventListener('change', e=>{
+  const f=e.target.files[0]; const l=document.getElementById('contactsLabel');
+  if(f){ l.textContent='✓ '+f.name; l.classList.add('loaded'); }
+});
+
+function readXlsx(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>{ try{ res(XLSX.read(new Uint8Array(e.target.result),{type:'array'})); }catch(err){ rej(err); } };
+    r.onerror=rej;
+    r.readAsArrayBuffer(file);
+  });
+}
+
+async function processFiles(){
+  const rf=document.getElementById('resultsFile').files[0];
+  const cf=document.getElementById('contactsFile').files[0];
+  if(!rf||!cf){ status('uploadStatus','Оберіть обидва файли','err'); return; }
+  status('uploadStatus','Обробка…','info');
+  try{
+    const [rwb,cwb]=await Promise.all([readXlsx(rf),readXlsx(cf)]);
+    parseResults(rwb);
+    parseContacts(cwb);
+    matchAll();
+    fillMetaFields();
+    renderList();
+    renderPreview();
+    status('uploadStatus',`✓ Готово. Учасників: ${state.players.length}, з email: ${state.players.filter(p=>p.email).length}`,'ok');
+  }catch(err){
+    console.error(err);
+    status('uploadStatus','Помилка читання: '+err.message,'err');
+  }
+}
+
+/* ====== ПАРСИНГ РЕЗУЛЬТАТІВ ====== */
+function parseResults(wb){
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''}).map(r=>r.map(c=>String(c).trim()));
+
+  // метадані з верхніх рядків
+  let t={name:'',date:'',location:'',arbiter:''};
+  for(const row of rows.slice(0,15)){
+    const line=row.filter(Boolean).join(' ');
+    if(!line) continue;
+    if(/^Турнір/i.test(line)&&!t.name) t.name=line.replace(/^Турнір\s*/i,'').trim();
+    if(/Дата\s*:/i.test(line)&&!t.date) t.date=line.split(/Дата\s*:/i)[1].trim();
+    if(/Місце\s*:/i.test(line)&&!t.location) t.location=line.split(/Місце\s*:/i)[1].trim();
+    if(/Головний арбітр\s*:/i.test(line)&&!t.arbiter) t.arbiter=line.split(/арбітр\s*:/i)[1].trim();
+  }
+  state.tournament=t;
+
+  // знаходимо рядок-заголовок таблиці (де є колонка "Ім'я")
+  let headerIdx=rows.findIndex(r=>r.some(c=>/^Ім.?я$/i.test(c)));
+  if(headerIdx<0) headerIdx=15;
+  const header=rows[headerIdx];
+  let nameCol=header.findIndex(c=>/^Ім.?я$/i.test(c));
+  let scoreCol=header.findIndex(c=>/^Очки/i.test(c));
+  if(nameCol<0) nameCol=3;
+  if(scoreCol<0) scoreCol=7;
+  const placeCol=0;
+
+  const players=[];
+  let lastPlace=null;
+  for(let i=headerIdx+1;i<rows.length;i++){
+    const row=rows[i];
+    const rawName=(row[nameCol]||'').trim();
+    if(!rawName) break; // порожній рядок = кінець таблиці
+    if(/chess-results|аннотація|дод\d/i.test(rawName)) continue;
+
+    // "Прізвище, Ім'я 3" -> прізвище + ім'я (прибираємо номер розряду в кінці)
+    let clean=rawName.replace(/\s+\d+\s*$/,'').trim();
+    let lastName='',firstName='';
+    if(clean.includes(',')){
+      const parts=clean.split(',');
+      lastName=parts[0].trim(); firstName=parts.slice(1).join(',').trim();
+    }else{
+      const parts=clean.split(/\s+/);
+      lastName=parts[0]||''; firstName=parts.slice(1).join(' ');
+    }
+
+    let placeRaw=(row[placeCol]||'').trim();
+    let place;
+    if(/^\d+$/.test(placeRaw)){ place=parseInt(placeRaw); lastPlace=place; }
+    else place=lastPlace!==null?lastPlace:players.length+1;
+
+    players.push({
+      lastName, firstName,
+      fullName:`${lastName}, ${firstName}`,
+      place,
+      score:(row[scoreCol]||'').trim(),
+      type:defaultType(place),
+      email:'', phone:'', hasContact:false, sendState:''
+    });
+  }
+  state.players=players;
+}
+function defaultType(place){
+  if(place===1) return 'place1';
+  if(place===2) return 'place2';
+  if(place===3) return 'place3';
+  return 'participation';
+}
+
+/* ====== ПАРСИНГ КОНТАКТІВ ====== */
+function parseContacts(wb){
+  const sheet=wb.Sheets[wb.SheetNames[0]];
+  const data=XLSX.utils.sheet_to_json(sheet,{defval:''});
+  // назви колонок беремо гнучко (у формі апострофи можуть бути різні)
+  const findKey=(row,patterns)=>{
+    for(const k of Object.keys(row)){
+      if(patterns.some(p=>p.test(k))) return k;
+    }
+    return null;
+  };
+  if(data.length===0){ state.contacts=[]; return; }
+  const sample=data[0];
+  const kEmail=findKey(sample,[/електрон|e-?mail|пошта/i]);
+  const kLast =findKey(sample,[/прізвищ|фамили/i]);
+  const kFirst=findKey(sample,[/ім.?я спортсмена|имя/i]);
+  const kPhone=findKey(sample,[/телефон|phone/i]);
+
+  state.contacts=data.map(row=>({
+    email:String(row[kEmail]||'').trim(),
+    lastName:String(row[kLast]||'').trim(),
+    firstName:String(row[kFirst]||'').trim(),
+    phone:String(row[kPhone]||'').trim()
+  })).filter(c=>c.email||c.lastName);
+}
+
+/* ====== МАТЧИНГ ====== */
+function norm(s){ return String(s||'').toLowerCase().replace(/['’ʼ`]/g,'').replace(/і/g,'и').replace(/\s+/g,' ').trim(); }
+function matchAll(){
+  state.players.forEach(p=>{
+    // спершу співпадіння прізвище+ім'я, потім лише прізвище
+    let c=state.contacts.find(c=>norm(c.lastName)===norm(p.lastName)&&norm(c.firstName)===norm(p.firstName));
+    if(!c) c=state.contacts.find(c=>norm(c.lastName)===norm(p.lastName));
+    if(c){ p.email=c.email; p.phone=c.phone; p.hasContact=!!c.email; }
+  });
+}
+
+/* ====== МЕТАДАНІ У ФОРМУ ====== */
+function fillMetaFields(){
+  const t=state.tournament;
+  document.getElementById('metaEdit').style.display='block';
+  document.getElementById('mTournament').value=t.name||'';
+  document.getElementById('mDate').value=t.date||'';
+  document.getElementById('mLocation').value=t.location||'';
+  document.getElementById('mArbiter').value=t.arbiter||'';
+}
+function currentMeta(){
+  return {
+    name:document.getElementById('mTournament').value.trim(),
+    date:document.getElementById('mDate').value.trim(),
+    location:document.getElementById('mLocation').value.trim(),
+    arbiter:document.getElementById('mArbiter').value.trim(),
+    org:document.getElementById('mOrg').value.trim(),
+    desc:document.getElementById('mDesc').value.trim()
+  };
+}
+
+let currentPlayerIdx = 0;
+
+/* ====== СПИСОК УЧАСНИКІВ ====== */
+function renderList(){
+  const box=document.getElementById('listContainer');
+  const typeOpts=p=>Object.entries(CERT_TYPES).map(([k,v])=>
+    `<option value="${k}" ${p.type===k?'selected':''}>${v.label}</option>`).join('');
+  box.innerHTML=state.players.map((p,i)=>`
+    <div class="prow ${p.hasContact?'':'dim'} ${i===currentPlayerIdx?'selected':''}"
+         onclick="selectPlayer(${i})" style="cursor:pointer;">
+      <div style="flex:1;">
+        <div class="pname">${p.place}. ${esc(p.fullName)}</div>
+        <div class="pmeta">${p.email||'(немає email)'} ${p.phone?'· '+esc(p.phone):''} · очки: ${esc(p.score)}</div>
+      </div>
+      <select class="type-select" onclick="event.stopPropagation()"
+        onchange="state.players[${i}].type=this.value; if(${i}===currentPlayerIdx) renderPreview();">${typeOpts(p)}</select>
+      <span class="badge ${p.hasContact?'ready':'no'}">${p.hasContact?'✓ email':'⚠ немає'}</span>
+    </div>`).join('');
+  renderSendList();
+  document.getElementById('sendBtn').disabled=!state.players.some(p=>p.hasContact);
+  document.getElementById('bulkBtn').disabled=state.players.length===0;
+}
+function selectPlayer(i){
+  currentPlayerIdx=i;
+  // підсвічуємо обраний рядок
+  document.querySelectorAll('#listContainer .prow').forEach((r,ri)=>
+    r.classList.toggle('selected', ri===i));
+  renderPreview();
+}
+function renderSendList(){
+  const box=document.getElementById('sendContainer');
+  const withEmail=state.players.filter(p=>p.hasContact);
+  box.innerHTML=withEmail.length? withEmail.map(p=>{
+    const b = p.sendState==='ok'?'<span class="badge sent">надіслано</span>'
+            : p.sendState==='fail'?'<span class="badge fail">помилка</span>'
+            : '<span class="badge ready">готово</span>';
+    return `<div class="prow"><div style="flex:1;"><div class="pname">${esc(p.fullName)}</div>
+      <div class="pmeta">${esc(p.email)} · ${CERT_TYPES[p.type].label}</div></div>${b}</div>`;
+  }).join(''):'<div class="status info show">Немає учасників з email.</div>';
+}
+
+/* ====== ПЕРЕГЛЯД СЕРТИФІКАТА ====== */
+function applyCert(p, meta, typeOverride){
+  const typeKey = typeOverride || (p ? p.type : 'participation');
+  const cfg=CERT_TYPES[typeKey];
+  const th=THEMES[currentTheme];
+  const cert=document.getElementById('certTemplate');
+  // тема
+  cert.style.setProperty('--c-frame',th.frame);
+  cert.style.setProperty('--c-bg1',th.bg1);
+  cert.style.setProperty('--c-bg2',th.bg2);
+  cert.style.setProperty('--c-ink',th.ink);
+  cert.style.setProperty('--c-tint',th.tint);
+  // акцент: беремо з типу грамоти (щоб місця відрізнялись), а базовий — з теми
+  cert.style.setProperty('--c-accent',cfg.a);
+  cert.style.setProperty('--c-accent2',cfg.b);
+  // орієнтація
+  cert.classList.toggle('portrait', currentOrient==='portrait');
+  // вміст
+  document.getElementById('cMedal').textContent=cfg.medal;
+  document.getElementById('cType').textContent=cfg.label;
+  document.getElementById('cName').textContent=p?p.fullName:"Прізвище, Ім'я";
+  document.getElementById('cOrg').textContent=(meta.org?meta.org.toUpperCase():'КЗ ДЮСШ "ДЕБЮТ"');
+  document.getElementById('cArbiter').textContent='Гол. арбітр: '+(meta.arbiter||'—');
+  document.getElementById('cDate').textContent='Дата: '+(meta.date||new Date().toLocaleDateString('uk-UA'));
+  let desc = meta.desc || 'За участь у турнірі та продемонстровані навички гри в шахи';
+  if(meta.name) desc = `Турнір «${meta.name}»${meta.location?', '+meta.location:''}. `+desc;
+  document.getElementById('cDesc').textContent=desc;
+}
+function renderPreview(){
+  const meta=currentMeta();
+  const p=state.players[currentPlayerIdx]||null;
+  applyCert(p, meta, null);
+}
+
+/* ====== ТЕМИ ТА ОРІЄНТАЦІЯ ====== */
+function initSwatches(){
+  const box=document.getElementById('themeSwatches');
+  box.innerHTML=Object.entries(THEMES).map(([k,t])=>
+    `<div class="swatch ${k===currentTheme?'active':''}" data-theme="${k}" title="${t.name}"
+      style="background:linear-gradient(135deg,${t.accent},${t.frame});" onclick="setTheme('${k}')"></div>`
+  ).join('');
+}
+function setTheme(k){
+  currentTheme=k;
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('active',s.dataset.theme===k));
+  renderPreview();
+}
+function setOrient(o){
+  currentOrient=o;
+  document.getElementById('orientH').classList.toggle('active',o==='landscape');
+  document.getElementById('orientV').classList.toggle('active',o==='portrait');
+  renderPreview();
+}
+
+/* ====== ГЕНЕРАЦІЯ PDF ОДНОГО СЕРТИФІКАТА ====== */
+async function makePdf(player, meta){
+  // тип грамоти беремо з самого гравця (кожен свій), а не з селектора перегляду
+  applyCert(player, meta, player ? player.type : undefined);
+  await new Promise(r=>setTimeout(r,80)); // дати браузеру перемалювати
+  const canvas=await html2canvas(document.getElementById('certTemplate'),{scale:2,useCORS:true,backgroundColor:null});
+  const img=canvas.toDataURL('image/jpeg',0.92);
+  const {jsPDF}=window.jspdf;
+  const portrait = currentOrient==='portrait';
+  const pdf=new jsPDF({orientation: portrait?'portrait':'landscape', unit:'mm', format:'a4'});
+  if(portrait) pdf.addImage(img,'JPEG',0,0,210,297);
+  else pdf.addImage(img,'JPEG',0,0,297,210);
+  return pdf;
+}
+
+async function downloadOnePreview(){
+  const meta=currentMeta();
+  const pdf=await makePdf(state.players[0]||{fullName:'Зразок',type:'participation'}, meta);
+  pdf.save('сертифікат_зразок.pdf');
+}
+
+/* ====== ZIP ЗІ ВСІМА PDF ====== */
+async function downloadAllZip(){
+  if(state.players.length===0) return;
+  const btn=document.getElementById('bulkBtn'), sp=document.getElementById('bulkSpinner');
+  btn.disabled=true; sp.style.display='block'; status('bulkStatus','','info');
+  const meta=currentMeta();
+  try{
+    const zip=new JSZip();
+    for(let i=0;i<state.players.length;i++){
+      const p=state.players[i];
+      const pdf=await makePdf(p,meta);
+      const safe=(p.lastName+'_'+p.firstName).replace(/[^\wа-яіїєґ]+/gi,'_');
+      zip.file(`${String(i+1).padStart(2,'0')}_${safe}.pdf`, pdf.output('blob'));
+      status('bulkStatus',`Готую ${i+1} з ${state.players.length}…`,'info');
+    }
+    const blob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='сертифікати.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+    status('bulkStatus','✓ ZIP завантажено!','ok');
+  }catch(err){ console.error(err); status('bulkStatus','Помилка: '+err.message,'err'); }
+  sp.style.display='none'; btn.disabled=false;
+  renderPreview();
+}
+
+/* ====== РОЗСИЛКА EMAIL (PDF як вкладення) ====== */
+async function sendAll(){
+  const meta=currentMeta();
+  const list=state.players.filter(p=>p.hasContact);
+  if(list.length===0){ status('sendStatus','Немає учасників з email','err'); return; }
+  if(!confirm(`Надіслати сертифікати на ${list.length} email?`)) return;
+
+  const btn=document.getElementById('sendBtn'), sp=document.getElementById('sendSpinner');
+  btn.disabled=true; sp.style.display='block';
+  let ok=0, fail=0;
+
+  for(const p of list){
+    try{
+      const pdf=await makePdf(p,meta);
+      // base64 PDF без префікса data: — піде як вкладення через Netlify-функцію
+      const base64=pdf.output('datauristring').split(',')[1];
+
+      const resp = await fetch('/.netlify/functions/send-cert', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          to_email: p.email,
+          to_name: p.fullName,
+          tournament_name: meta.name,
+          cert_type: CERT_TYPES[p.type].label,
+          pdf_base64: base64,
+          filename: `Сертифікат_${p.lastName}.pdf`
+        })
+      });
+
+      if(!resp.ok){
+        const errText = await resp.text();
+        throw new Error('HTTP '+resp.status+': '+errText);
+      }
+      p.sendState='ok'; ok++;
+    }catch(err){
+      console.error('send fail',p.email,err);
+      p.sendState='fail'; fail++;
+    }
+    renderSendList();
+    await new Promise(r=>setTimeout(r,300));
+  }
+  sp.style.display='none'; btn.disabled=false;
+  status('sendStatus',`✓ Надіслано: ${ok} · ✗ Помилок: ${fail}`, fail? 'err':'ok');
+  renderPreview();
+}
+
+/* ====== ДОПОМІЖНІ ====== */
+function switchTab(e,id){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  e.target.classList.add('active');
+}
+function status(id,msg,type){
+  const el=document.getElementById(id);
+  el.textContent=msg;
+  el.className=msg?('status show '+(type||'info')):'status';
+}
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+
+/* ====== ІНІЦІАЛІЗАЦІЯ ====== */
+initSwatches();
+</script>
+</body>
+</html>

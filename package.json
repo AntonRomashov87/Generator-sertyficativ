@@ -1,0 +1,8 @@
+{
+  "name": "certificate-generator",
+  "version": "1.0.0",
+  "description": "Генератор сертифікатів з розсилкою через Gmail",
+  "dependencies": {
+    "nodemailer": "^6.9.14"
+  }
+}
