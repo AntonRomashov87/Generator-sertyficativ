@@ -124,6 +124,7 @@
     font-size:clamp(8px,1.35vw,12px);color:#4a5a50;padding-top:2%;}
   .cert-fcol{text-align:center;flex:1;}
   .cert-fline{border-top:1px solid #8a9a90;padding-top:4px;margin-top:18px;}
+  .cert-sign-img{display:block;max-height:clamp(24px,6vw,46px);max-width:clamp(70px,16vw,130px);object-fit:contain;margin:0 auto -2px;}
   .cert-seal{font-size:clamp(14px,3vw,26px);color:var(--c-accent,#d4af37);opacity:.7;}
 
   /* ===== ЛОГОТИПИ СПОНСОРІВ ===== */
@@ -222,6 +223,14 @@
           </div>
         </div>
         <div class="style-group">
+          <span>Підпис організатора</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="file" id="signInput" accept="image/*" style="display:none;" onchange="handleSign(event)">
+            <label for="signInput" class="orient-btn" style="cursor:pointer;">✍ Додати</label>
+            <button class="orient-btn" onclick="clearSign()" title="Прибрати підпис">✕</button>
+          </div>
+        </div>
+        <div class="style-group">
           <span>Позиція логотипів</span>
           <div class="orient-btns">
             <button class="orient-btn active" id="spTop" onclick="setSponsorPos('top')">Зверху</button>
@@ -260,7 +269,10 @@
               <div class="cert-sponsors inside" id="sponsorsInside"></div>
             </div>
             <div class="cert-foot">
-              <div class="cert-fcol"><div class="cert-fline" id="cArbiter">Головний арбітр</div></div>
+              <div class="cert-fcol">
+                <img class="cert-sign-img" id="cSignImg" alt="" style="display:none;">
+                <div class="cert-fline" id="cArbiter">Головний арбітр</div>
+              </div>
               <div class="cert-fcol cert-seal">♚</div>
               <div class="cert-fcol"><div class="cert-fline" id="cDate">Дата</div></div>
             </div>
@@ -338,6 +350,7 @@ let currentTheme = 'green';
 let currentOrient = 'landscape';
 let sponsorLogos = [];        // масив base64 картинок
 let sponsorPos = 'top';       // top | side | inside | bottom
+let signImg = null;           // base64 підпису організатора
 
 let state = { tournament:{}, players:[], contacts:[] };
 
@@ -570,6 +583,10 @@ function applyCert(p, meta, typeOverride){
   document.getElementById('cName').textContent=p?p.fullName:"Прізвище, Ім'я";
   document.getElementById('cOrg').textContent=(meta.org?meta.org.toUpperCase():'КЗ ДЮСШ "ДЕБЮТ"');
   document.getElementById('cArbiter').textContent='Гол. арбітр: '+(meta.arbiter||'—');
+  // факсиміле підпису організатора
+  const signEl=document.getElementById('cSignImg');
+  if(signImg){ signEl.src=signImg; signEl.style.display='block'; }
+  else { signEl.style.display='none'; }
   document.getElementById('cDate').textContent='Дата: '+(meta.date||new Date().toLocaleDateString('uk-UA'));
   let desc = meta.desc || 'За участь у турнірі та продемонстровані навички гри в шахи';
   if(meta.name) desc = `Турнір «${meta.name}»${meta.location?', '+meta.location:''}. `+desc;
@@ -611,6 +628,19 @@ function handleSponsors(e){
 }
 function clearSponsors(){
   sponsorLogos=[];
+  renderPreview();
+}
+function handleSign(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{ signImg=ev.target.result; renderPreview(); };
+  r.readAsDataURL(file);
+  e.target.value='';
+}
+function clearSign(){
+  signImg=null;
+  document.getElementById('signInput').value='';
   renderPreview();
 }
 function setSponsorPos(pos){
