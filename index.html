@@ -126,6 +126,26 @@
   .cert-fline{border-top:1px solid #8a9a90;padding-top:4px;margin-top:18px;}
   .cert-seal{font-size:clamp(14px,3vw,26px);color:var(--c-accent,#d4af37);opacity:.7;}
 
+  /* ===== ЛОГОТИПИ СПОНСОРІВ ===== */
+  .cert-sponsors{display:none;align-items:center;justify-content:center;gap:clamp(8px,2vw,18px);flex-wrap:wrap;z-index:3;}
+  .cert-sponsors img{object-fit:contain;background:rgba(255,255,255,.6);border-radius:4px;padding:2px;}
+  /* зверху — під назвою організації, горизонтальний ряд */
+  .cert-sponsors.top{margin:2% 0 1%;}
+  .cert-sponsors.top img{max-height:clamp(22px,5vw,42px);max-width:clamp(60px,14vw,120px);}
+  /* всередину — під описом */
+  .cert-sponsors.inside{margin-top:2.5%;}
+  .cert-sponsors.inside img{max-height:clamp(20px,4.5vw,38px);max-width:clamp(55px,13vw,110px);}
+  /* внизу — над футером, притиснуто до низу перед підписами */
+  .cert-sponsors.bottom{position:absolute;bottom:calc(6% + clamp(30px,7vw,54px));left:8%;right:8%;}
+  .cert-sponsors.bottom img{max-height:clamp(20px,4.5vw,38px);max-width:clamp(55px,13vw,110px);}
+  /* збоку — вертикальна смуга ліворуч */
+  .cert-sponsors.side{position:absolute;top:50%;left:26px;transform:translateY(-50%);flex-direction:column;width:clamp(40px,9vw,74px);}
+  .cert-sponsors.side img{max-width:100%;max-height:clamp(34px,8vw,64px);}
+  /* активна позиція показується */
+  .cert-sponsors.show{display:flex;}
+  /* коли логотипи збоку — трохи зсуваємо центр щоб не налазили */
+  .cert.sponsors-side .cert-inner{padding-left:clamp(48px,11vw,90px);}
+
   /* панель вибору вигляду */
   .style-panel{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;background:var(--panel2);border-radius:8px;}
   .style-group{display:flex;flex-direction:column;gap:6px;}
@@ -193,6 +213,23 @@
             <button class="orient-btn" id="orientV" onclick="setOrient('portrait')">▯ Вертик.</button>
           </div>
         </div>
+        <div class="style-group">
+          <span>Логотипи спонсорів</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="file" id="sponsorInput" accept="image/*" multiple style="display:none;" onchange="handleSponsors(event)">
+            <label for="sponsorInput" class="orient-btn" style="cursor:pointer;">＋ Додати</label>
+            <button class="orient-btn" onclick="clearSponsors()" title="Прибрати всі">✕ Очистити</button>
+          </div>
+        </div>
+        <div class="style-group">
+          <span>Позиція логотипів</span>
+          <div class="orient-btns">
+            <button class="orient-btn active" id="spTop" onclick="setSponsorPos('top')">Зверху</button>
+            <button class="orient-btn" id="spSide" onclick="setSponsorPos('side')">Збоку</button>
+            <button class="orient-btn" id="spInside" onclick="setSponsorPos('inside')">Всередині</button>
+            <button class="orient-btn" id="spBottom" onclick="setSponsorPos('bottom')">Внизу</button>
+          </div>
+        </div>
         <div class="style-group" style="color:var(--text-dim);font-size:.82em;align-self:flex-end;padding-bottom:4px;">
           👆 Клікніть на учасника в списку щоб побачити його грамоту
         </div>
@@ -202,9 +239,13 @@
           <div class="cert-watermark">♞</div>
           <span class="cert-corner tl">♜</span><span class="cert-corner tr">♞</span>
           <span class="cert-corner bl">♝</span><span class="cert-corner br">♛</span>
+          <!-- логотипи збоку (ліва вертикальна смуга) -->
+          <div class="cert-sponsors side" id="sponsorsSide"></div>
           <div class="cert-inner">
             <div class="cert-head">
               <div class="cert-org" id="cOrg">КЗ ДЮСШ "ДЕБЮТ"</div>
+              <!-- логотипи зверху -->
+              <div class="cert-sponsors top" id="sponsorsTop"></div>
               <div class="cert-topline">♟ ♞ ♝ ♜ ♛ ♚ ♛ ♜ ♝ ♞ ♟</div>
             </div>
             <div class="cert-mid">
@@ -215,12 +256,16 @@
               <div class="cert-sub">нагороджується</div>
               <div class="cert-name" id="cName">Прізвище, Ім'я</div>
               <div class="cert-desc" id="cDesc">За участь у турнірі та продемонстровані навички гри в шахи</div>
+              <!-- логотипи всередині (під описом) -->
+              <div class="cert-sponsors inside" id="sponsorsInside"></div>
             </div>
             <div class="cert-foot">
               <div class="cert-fcol"><div class="cert-fline" id="cArbiter">Головний арбітр</div></div>
               <div class="cert-fcol cert-seal">♚</div>
               <div class="cert-fcol"><div class="cert-fline" id="cDate">Дата</div></div>
             </div>
+            <!-- логотипи внизу (над футером) -->
+            <div class="cert-sponsors bottom" id="sponsorsBottom"></div>
           </div>
         </div>
       </div>
@@ -291,6 +336,8 @@ const THEMES = {
 };
 let currentTheme = 'green';
 let currentOrient = 'landscape';
+let sponsorLogos = [];        // масив base64 картинок
+let sponsorPos = 'top';       // top | side | inside | bottom
 
 let state = { tournament:{}, players:[], contacts:[] };
 
@@ -527,11 +574,47 @@ function applyCert(p, meta, typeOverride){
   let desc = meta.desc || 'За участь у турнірі та продемонстровані навички гри в шахи';
   if(meta.name) desc = `Турнір «${meta.name}»${meta.location?', '+meta.location:''}. `+desc;
   document.getElementById('cDesc').textContent=desc;
+  // логотипи спонсорів
+  applySponsors(cert);
 }
-function renderPreview(){
-  const meta=currentMeta();
-  const p=state.players[currentPlayerIdx]||null;
-  applyCert(p, meta, null);
+
+/* ====== ЛОГОТИПИ СПОНСОРІВ ====== */
+function applySponsors(cert){
+  const zones={top:'sponsorsTop', side:'sponsorsSide', inside:'sponsorsInside', bottom:'sponsorsBottom'};
+  const imgsHtml = sponsorLogos.map(src=>`<img src="${src}">`).join('');
+  // очищаємо всі зони, показуємо лише активну
+  Object.entries(zones).forEach(([pos,id])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(pos===sponsorPos && sponsorLogos.length){
+      el.innerHTML=imgsHtml; el.classList.add('show');
+    }else{
+      el.innerHTML=''; el.classList.remove('show');
+    }
+  });
+  // зсув центру коли логотипи збоку
+  cert.classList.toggle('sponsors-side', sponsorPos==='side' && sponsorLogos.length>0);
+}
+function handleSponsors(e){
+  const files=Array.from(e.target.files||[]);
+  files.forEach(file=>{
+    const r=new FileReader();
+    r.onload=ev=>{ sponsorLogos.push(ev.target.result); renderPreview(); };
+    r.readAsDataURL(file);
+  });
+  e.target.value='';
+}
+function clearSponsors(){
+  sponsorLogos=[];
+  renderPreview();
+}
+function setSponsorPos(pos){
+  sponsorPos=pos;
+  ['top','side','inside','bottom'].forEach(p=>{
+    const btn=document.getElementById('sp'+p.charAt(0).toUpperCase()+p.slice(1));
+    if(btn) btn.classList.toggle('active', p===pos);
+  });
+  renderPreview();
 }
 
 /* ====== ТЕМИ ТА ОРІЄНТАЦІЯ ====== */
