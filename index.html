@@ -94,6 +94,8 @@
   .cert-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-48%);
     font-size:clamp(120px,32vw,260px);color:var(--c-accent,#d4af37);opacity:.06;
     z-index:0;pointer-events:none;line-height:1;}
+  .cert-watermark-img{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:55%;max-height:65%;object-fit:contain;opacity:.10;z-index:0;pointer-events:none;}
 
   /* кутові шахові фігури */
   .cert-corner{position:absolute;font-size:clamp(16px,3.2vw,30px);color:var(--c-accent,#d4af37);opacity:.55;z-index:2;}
@@ -124,7 +126,7 @@
     font-size:clamp(8px,1.35vw,12px);color:#4a5a50;padding-top:2%;}
   .cert-fcol{text-align:center;flex:1;}
   .cert-fline{border-top:1px solid #8a9a90;padding-top:4px;margin-top:18px;}
-  .cert-sign-img{display:block;max-height:clamp(40px,10vw,74px);max-width:clamp(110px,26vw,200px);object-fit:contain;margin:0 auto -4px;}
+  .cert-sign-img{display:block;max-height:clamp(56px,14vw,100px);max-width:clamp(150px,34vw,260px);object-fit:contain;margin:0 auto -6px;}
   .cert-seal{font-size:clamp(14px,3vw,26px);color:var(--c-accent,#d4af37);opacity:.7;}
 
   /* ===== ЛОГОТИПИ СПОНСОРІВ ===== */
@@ -231,6 +233,14 @@
           </div>
         </div>
         <div class="style-group">
+          <span>Логотип як фон</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="file" id="bgLogoInput" accept="image/*" style="display:none;" onchange="handleBgLogo(event)">
+            <label for="bgLogoInput" class="orient-btn" style="cursor:pointer;">🖼 Додати</label>
+            <button class="orient-btn" onclick="clearBgLogo()" title="Повернути шаховий фон">✕</button>
+          </div>
+        </div>
+        <div class="style-group">
           <span>Позиція логотипів</span>
           <div class="orient-btns">
             <button class="orient-btn active" id="spTop" onclick="setSponsorPos('top')">Зверху</button>
@@ -245,7 +255,8 @@
       </div>
       <div class="cert-wrap">
         <div class="cert" id="certTemplate" style="--c-accent:#d4af37;--c-accent2:#9d8330;">
-          <div class="cert-watermark">♞</div>
+          <div class="cert-watermark" id="cWatermark">♞</div>
+          <img class="cert-watermark-img" id="cWatermarkImg" alt="" style="display:none;">
           <span class="cert-corner tl">♜</span><span class="cert-corner tr">♞</span>
           <span class="cert-corner bl">♝</span><span class="cert-corner br">♛</span>
           <!-- логотипи збоку (ліва вертикальна смуга) -->
@@ -351,6 +362,7 @@ let currentOrient = 'landscape';
 let sponsorLogos = [];        // масив base64 картинок
 let sponsorPos = 'top';       // top | side | inside | bottom
 let signImg = null;           // base64 підпису організатора
+let bgLogo = null;            // base64 логотипу-фону (замінює водяний знак коня)
 
 let state = { tournament:{}, players:[], contacts:[] };
 
@@ -446,7 +458,7 @@ function parseResults(wb){
 
     players.push({
       lastName, firstName,
-      fullName:`${lastName}, ${firstName}`,
+      fullName:`${lastName} ${firstName}`,
       place,
       score:(row[scoreCol]||'').trim(),
       type:defaultType(place),
@@ -580,13 +592,23 @@ function applyCert(p, meta, typeOverride){
   // вміст
   document.getElementById('cMedal').textContent=cfg.medal;
   document.getElementById('cType').textContent=cfg.label;
-  document.getElementById('cName').textContent=p?p.fullName:"Прізвище, Ім'я";
+  document.getElementById('cName').textContent=p?p.fullName:"Прізвище Ім'я";
   document.getElementById('cOrg').textContent=(meta.org?meta.org.toUpperCase():'КЗ ДЮСШ "ДЕБЮТ"');
   document.getElementById('cArbiter').textContent='Гол. арбітр: '+(meta.arbiter||'—');
   // факсиміле підпису організатора
   const signEl=document.getElementById('cSignImg');
   if(signImg){ signEl.src=signImg; signEl.style.display='block'; }
   else { signEl.style.display='none'; }
+  // логотип як фон (замість шахового коня-водяного знаку)
+  const wmChess=document.getElementById('cWatermark');
+  const wmImg=document.getElementById('cWatermarkImg');
+  if(bgLogo){
+    wmChess.style.display='none';
+    wmImg.src=bgLogo; wmImg.style.display='block';
+  }else{
+    wmChess.style.display='block';
+    wmImg.style.display='none';
+  }
   document.getElementById('cDate').textContent='Дата: '+(meta.date||new Date().toLocaleDateString('uk-UA'));
   let desc = meta.desc || 'За участь у турнірі та продемонстровані навички гри в шахи';
   if(meta.name) desc = `Турнір «${meta.name}»${meta.location?', '+meta.location:''}. `+desc;
@@ -641,6 +663,19 @@ function handleSign(e){
 function clearSign(){
   signImg=null;
   document.getElementById('signInput').value='';
+  renderPreview();
+}
+function handleBgLogo(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{ bgLogo=ev.target.result; renderPreview(); };
+  r.readAsDataURL(file);
+  e.target.value='';
+}
+function clearBgLogo(){
+  bgLogo=null;
+  document.getElementById('bgLogoInput').value='';
   renderPreview();
 }
 function setSponsorPos(pos){
