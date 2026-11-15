@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
@@ -141,12 +140,13 @@
   .orient-btn.active{border-color:var(--gold);color:var(--gold);}
 
   /* підпис судді — великий, лягає на лінію підпису */
-  .cert{--sig-h:clamp(30px,3.9vw,44px);}
+  .cert{--sig-h:clamp(45px,5.85vw,66px);}
   .sigwrap{position:relative;margin-top:18px;}
   .sigwrap .cert-fline{margin-top:0;}
   .cert-sign-img{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% - 4px);
-    height:var(--sig-h);width:auto;max-width:90%;object-fit:contain;z-index:3;}
-  .cert.has-sign .sigwrap{margin-top:calc(var(--sig-h) - 14px);}
+    height:var(--sig-h);width:auto;max-width:170%;object-fit:contain;z-index:3;}
+  .cert.has-sign .sigwrap{margin-top:calc(var(--sig-h) - 12px);}
+  .cert.has-sign .cert-mid{gap:.5%;}
 
   /* афіша турніру як фон */
   .cert-poster{display:none;position:absolute;inset:0;background-size:cover;background-position:center;
@@ -467,13 +467,10 @@
 </div>
 
 <script>
-/* ====== EMAILJS ======
-   Публічний ключ і Service ID можна тримати у фронтенді — це нормально для EmailJS.
-   Якщо колись зміните акаунт — просто виправте три значення нижче. */
-const EMAILJS_PUBLIC_KEY  = 'QqyONrEUIgejOYuu-';
-const EMAILJS_SERVICE_ID  = 'service_pwio8vh';
-const EMAILJS_TEMPLATE_ID = 'template_pg11mtg';
-emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+/* ====== РОЗСИЛКА ======
+   Листи надсилає Netlify-функція netlify/functions/send-cert.js через Gmail
+   (пароль додатку лежить у змінних Netlify, не в коді). */
+const SEND_ENDPOINT = '/.netlify/functions/send-cert';
 
 /* ====== ТИПИ ГРАМОТ ====== */
 const CERT_TYPES = {
@@ -1183,32 +1180,37 @@ async function sendAll(){
 
   const btn=document.getElementById('sendBtn'), sp=document.getElementById('sendSpinner');
   btn.disabled=true; sp.style.display='block';
-  let ok=0, fail=0;
+  let ok=0, fail=0, lastErr='';
 
   for(const p of list){
     try{
       const pdf=await makePdf(p,meta);
-      // base64 без префікса data: — для вкладення EmailJS
+      // base64 без префікса data: — вкладення PDF
       const base64=pdf.output('datauristring').split(',')[1];
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email:p.email,
-        to_name:p.fullName,
-        participant_name:p.fullName,
-        tournament_name:meta.name,
-        cert_type:CERT_TYPES[p.type].label,
-        content:base64,
-        filename:`Сертифікат_${p.lastName}.pdf`
+      const resp=await fetch(SEND_ENDPOINT,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          to_email:p.email,
+          to_name:p.fullName,
+          tournament_name:meta.name,
+          cert_type:CERT_TYPES[p.type].label,
+          pdf_base64:base64,
+          filename:`Сертифікат_${p.lastName}.pdf`
+        })
       });
+      if(!resp.ok){ throw new Error(`HTTP ${resp.status}: ${(await resp.text()).slice(0,300)}`); }
       p.sendState='ok'; ok++;
     }catch(err){
       console.error('send fail',p.email,err);
+      lastErr=err.message||String(err);
       p.sendState='fail'; fail++;
     }
     renderSendList();
     await new Promise(r=>setTimeout(r,400)); // не перевищувати ліміт швидкості
   }
   sp.style.display='none'; btn.disabled=false;
-  status('sendStatus',`✓ Надіслано: ${ok} · ✗ Помилок: ${fail}`, fail? 'err':'ok');
+  status('sendStatus',`✓ Надіслано: ${ok} · ✗ Помилок: ${fail}`+(lastErr?` — остання помилка: ${lastErr}`:''), fail? 'err':'ok');
   renderPreview();
 }
 
