@@ -161,15 +161,18 @@
   .cert.logos-top .cert-topline{display:none;}
   .cert.logos-top .cert-divider{display:none;}
   .cert.logos-bottom .cert-seal{display:none;}
-  .cert.logos-bottom .cert-fmid{flex:1.1;}
-  #cSponsorsTop .sp-logo{height:clamp(13px,2.6vw,21px);}
-  #cSponsorsBottom .sp-logo{height:clamp(13px,2.4vw,19px);max-width:clamp(30px,5.5vw,46px);padding:1px 3px;}
-  #cSponsorsBottom{gap:clamp(3px,.8vw,8px);}
-  .sp-side{display:none;position:absolute;left:30px;top:50%;transform:translateY(-50%);
-    flex-direction:column;align-items:center;gap:8px;z-index:3;max-height:62%;}
+  .cert.logos-bottom .cert-fmid{flex:1.8;}
+  .cert.logos-bottom .cert-sign-img{max-width:135%;}
+  .cert{--ls:1;}
+  #cSponsorsTop .sp-logo{height:calc(clamp(24px,4.4vw,40px) * var(--ls));max-width:calc(clamp(80px,16vw,150px) * var(--ls));}
+  /* знизу: логотипи ділять ширину центральної колонки порівну, не переносяться */
+  #cSponsorsBottom{gap:clamp(4px,1vw,10px);flex-wrap:nowrap;}
+  #cSponsorsBottom .sp-logo{flex:1 1 0;min-width:0;max-width:none;width:0;height:calc(clamp(24px,4.2vw,38px) * var(--ls));padding:2px 4px;}
+  .sp-side{display:none;position:absolute;left:26px;top:22%;
+    flex-direction:column;align-items:center;gap:8px;z-index:3;}
   .sp-logo{height:clamp(18px,4.2vw,34px);width:auto;max-width:clamp(50px,12vw,110px);object-fit:contain;
     background:rgba(255,255,255,.85);border-radius:4px;padding:2px 5px;}
-  .sp-side .sp-logo{height:auto;max-height:clamp(24px,5vw,42px);max-width:clamp(36px,6.5vw,56px);}
+  .sp-side .sp-logo{height:auto;max-height:calc(clamp(38px,7vw,64px) * var(--ls));max-width:calc(clamp(60px,11vw,100px) * var(--ls));}
 
   /* мініатюри у формі завантаження */
   .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
@@ -296,6 +299,11 @@
             <button class="orient-btn" id="logoPosTop" onclick="setLogoPos('top')">⬆ Зверху</button>
             <button class="orient-btn" id="logoPosBottom" onclick="setLogoPos('bottom')">⬇ Знизу</button>
             <button class="orient-btn" id="logoPosSide" onclick="setLogoPos('side')">⬅ Збоку</button>
+          </div>
+          <div class="range-row">
+            <span>Розмір логотипів</span>
+            <input type="range" id="logoScale" min="50" max="220" value="100" oninput="setLogoScale(this.value)">
+            <span id="logoScaleVal">100%</span>
           </div>
           <div class="btn-row" style="margin-top:8px;">
             <button class="btn btn-secondary" onclick="clearSponsorLogos()">✕ Прибрати всі логотипи</button>
@@ -544,7 +552,7 @@ try{ sponsorLogos = JSON.parse(lsGet('scs_sponsorLogos') || '[]'); if(!Array.isA
 const _oldLogo = lsGet('scs_sponsorLogo');           // міграція зі старої версії (один логотип)
 if(_oldLogo && !sponsorLogos.length) sponsorLogos=[_oldLogo];
 let posterImg = lsGet('scs_poster') || null;
-let assetPrefs = { logoPos:'top', posterOpacity:25 };
+let assetPrefs = { logoPos:'top', posterOpacity:25, logoScale:100 };
 try{ Object.assign(assetPrefs, JSON.parse(lsGet('scs_assetPrefs') || '{}')); }catch(err){}
 const MAX_LOGOS = 6;
 
@@ -630,7 +638,15 @@ function setLogoPos(p){
   assetPrefs.logoPos=p; saveAssetPrefs();
   updateSponsorLogoUI(); renderPreview();
 }
+function setLogoScale(v){
+  assetPrefs.logoScale=Math.max(40,Math.min(260,parseInt(v)||100));
+  document.getElementById('logoScaleVal').textContent=assetPrefs.logoScale+'%';
+  saveAssetPrefs();
+  syncCertImages();
+}
 function updateSponsorLogoUI(){
+  document.getElementById('logoScale').value=assetPrefs.logoScale;
+  document.getElementById('logoScaleVal').textContent=assetPrefs.logoScale+'%';
   const l=document.getElementById('sponsorLogoLabel');
   const act=document.getElementById('sponsorActions');
   const th=document.getElementById('sponsorThumbs');
@@ -688,6 +704,7 @@ function syncCertImages(){
   }else{ posterEl.style.display='none'; posterEl.style.backgroundImage='none'; posterEl.dataset.src=''; }
   cert.classList.toggle('has-poster', !!posterImg);
   cert.classList.toggle('has-sign', !!signatureImg);
+  cert.style.setProperty('--ls', (assetPrefs.logoScale||100)/100);
   cert.classList.toggle('logos-top', sponsorLogos.length>0 && assetPrefs.logoPos==='top');
   cert.classList.toggle('logos-bottom', sponsorLogos.length>0 && assetPrefs.logoPos==='bottom');
 
@@ -799,14 +816,24 @@ function parseResults(wb){
     if(!t.name && !isBoilerplateLine(line) && !isLabelLine(line)) t.name=line;
   }
   // посилання на сторінку турніру chess-results.com (для QR-коду)
-  let resultsUrl='';
-  outer: for(const row of rows){
+  // У файлі є і головна адреса сайту (у шапці), і сторінка турніру (внизу, tnr12345.aspx).
+  // Збираємо всі посилання — з тексту клітинок і з гіперпосилань — та беремо саме сторінку турніру.
+  const urlCandidates=[];
+  for(const row of rows){
     for(const cell of row){
-      const m=String(cell).match(/https?:\/\/(www\.)?chess-results\.com\S*/i);
-      if(m){ resultsUrl=m[0].replace(/[),.;]+$/,''); break outer; }
+      for(const m of String(cell).matchAll(/https?:\/\/(?:www\.)?chess-results\.com\S*/gi)){
+        urlCandidates.push(m[0].replace(/[),.;»"']+$/,''));
+      }
     }
   }
+  for(const addr of Object.keys(sheet)){
+    if(addr[0]!=='!' && sheet[addr] && sheet[addr].l && sheet[addr].l.Target) urlCandidates.push(String(sheet[addr].l.Target));
+  }
+  const tournamentUrls=urlCandidates.filter(u=>/\/tnr\d+/i.test(u));
+  // лише сторінка турніру; якщо її немає — QR краще не показувати, ніж вести на головну
+  let resultsUrl=tournamentUrls.length ? tournamentUrls[tournamentUrls.length-1] : '';
   t.resultsUrl=resultsUrl;
+  t.name=(t.name||'').replace(/\s+/g,' ').trim();
   state.tournament=t;
 
   // знаходимо рядок-заголовок таблиці (де є колонка "Ім'я")
@@ -830,7 +857,13 @@ function parseResults(wb){
     if(/chess-results|аннотація|дод\d/i.test(rawName)) continue;
 
     // "Прізвище, Ім'я 3" -> прізвище + ім'я (прибираємо номер розряду в кінці)
-    let clean=rawName.replace(/\s+\d+\s*$/,'').trim();
+    // також прибираємо позначки категорії в кінці: "поч.", "початківець" тощо
+    let clean=rawName.replace(/\s+/g,' ').trim();
+    let prev;
+    do{
+      prev=clean;
+      clean=clean.replace(/\s+(\d+|поч\.?|початківц\S*|б\/р\.?)\s*$/i,'').trim();
+    }while(clean!==prev);
     let lastName='',firstName='';
     if(clean.includes(',')){
       const parts=clean.split(',');
