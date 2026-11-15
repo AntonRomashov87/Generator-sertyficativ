@@ -119,7 +119,7 @@
   .cert-divider{font-size:clamp(9px,1.9vw,15px);color:var(--c-accent,#d4af37);letter-spacing:4px;opacity:.7;}
   .cert-sub{font-size:clamp(9px,1.5vw,12px);color:#5a6b5f;}
   .cert-name{font-size:clamp(17px,4vw,32px);font-weight:bold;color:var(--c-ink,#12211a);padding-bottom:1%;border-bottom:2px solid var(--c-accent,#d4af37);}
-  .cert-desc{font-size:clamp(8px,1.55vw,13px);color:#3a4a40;max-width:82%;line-height:1.45;}
+  .cert-desc{font-size:clamp(8px,1.55vw,13px);color:#3a4a40;max-width:94%;line-height:1.4;}
 
   /* ЗОНА 3 — футер (притиснутий до низу flex-ом, БЕЗ absolute) */
   .cert-foot{flex:0 0 auto;width:100%;display:flex;justify-content:space-between;align-items:flex-end;
@@ -140,13 +140,48 @@
   .prow.selected{border:1px solid var(--gold);background:rgba(212,175,55,.08);}
   .orient-btn.active{border-color:var(--gold);color:var(--gold);}
 
-  .cert-sign-img{display:none;max-height:34px;max-width:140px;object-fit:contain;margin:0 auto 4px;}
-  .cert-sponsor-logo{display:none;position:absolute;top:14px;right:14px;max-height:46px;max-width:110px;
-    object-fit:contain;z-index:3;background:rgba(255,255,255,.85);border-radius:4px;padding:3px;}
+  /* підпис судді — великий, лягає на лінію підпису */
+  .cert{--sig-h:clamp(30px,3.9vw,44px);}
+  .sigwrap{position:relative;margin-top:18px;}
+  .sigwrap .cert-fline{margin-top:0;}
+  .cert-sign-img{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% - 4px);
+    height:var(--sig-h);width:auto;max-width:90%;object-fit:contain;z-index:3;}
+  .cert.has-sign .sigwrap{margin-top:calc(var(--sig-h) - 14px);}
+
+  /* афіша турніру як фон */
+  .cert-poster{display:none;position:absolute;inset:0;background-size:cover;background-position:center;
+    background-repeat:no-repeat;z-index:0;pointer-events:none;}
+  .cert.has-poster .cert-watermark{display:none;}
+  .cert.has-poster .cert-mid{
+    background:radial-gradient(closest-side, rgba(255,255,255,.85) 0%, rgba(255,255,255,.62) 65%, rgba(255,255,255,0) 100%);}
+
+  /* логотипи спонсорів */
+  .sp-row{display:none;align-items:center;justify-content:center;gap:clamp(6px,1.4vw,14px);flex-wrap:wrap;width:100%;}
+  .cert-head .sp-row{margin-top:2px;}
+  .cert.logos-top .cert-topline{display:none;}
+  .cert.logos-top .cert-divider{display:none;}
+  .cert.logos-bottom .cert-seal{display:none;}
+  .cert.logos-bottom .cert-fmid{flex:1.1;}
+  #cSponsorsTop .sp-logo{height:clamp(13px,2.6vw,21px);}
+  #cSponsorsBottom .sp-logo{height:clamp(13px,2.4vw,19px);max-width:clamp(30px,5.5vw,46px);padding:1px 3px;}
+  #cSponsorsBottom{gap:clamp(3px,.8vw,8px);}
+  .sp-side{display:none;position:absolute;left:30px;top:50%;transform:translateY(-50%);
+    flex-direction:column;align-items:center;gap:8px;z-index:3;max-height:62%;}
+  .sp-logo{height:clamp(18px,4.2vw,34px);width:auto;max-width:clamp(50px,12vw,110px);object-fit:contain;
+    background:rgba(255,255,255,.85);border-radius:4px;padding:2px 5px;}
+  .sp-side .sp-logo{height:auto;max-height:clamp(24px,5vw,42px);max-width:clamp(36px,6.5vw,56px);}
+
+  /* мініатюри у формі завантаження */
+  .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+  .thumb{position:relative;width:64px;height:48px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;}
+  .thumb img{max-width:56px;max-height:40px;object-fit:contain;}
+  .thumb button{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:none;
+    background:#c0392b;color:#fff;font-size:11px;line-height:18px;cursor:pointer;padding:0;}
+  .range-row{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:.82em;color:var(--text-dim);}
+  .range-row input[type=range]{flex:1;}
   .cert-qr{display:none;position:absolute;bottom:14px;right:14px;width:48px;height:48px;
     object-fit:contain;z-index:3;background:#fff;border-radius:4px;padding:3px;}
   /* коли лого/QR присутні — ховаємо кутові шахові фігурки, щоб не накладались */
-  .cert.has-logo .cert-corner.tr{display:none;}
   .cert.has-qr .cert-corner.br{display:none;}
 
   /* ===== СТИЛІ ОФОРМЛЕННЯ ===== */
@@ -239,20 +274,48 @@
       </div>
       <div class="status" id="uploadStatus"></div>
 
-      <div class="field" style="margin-top:18px;">
-        <label>🖋️ Підпис тренера (зображення, зберігається в браузері)</label>
+      <h2 style="font-size:1.1em;margin-top:22px;">🎨 Оформлення грамоти <span style="font-size:.7em;color:var(--text-dim);">(зберігається в браузері)</span></h2>
+
+      <div class="field">
+        <label>🖋️ Підпис судді (краще PNG з прозорим фоном)</label>
         <input type="file" id="signatureFile" accept="image/*">
         <label for="signatureFile" class="file-label" id="signatureLabel">Обрати підпис</label>
         <div class="btn-row" id="signatureActions" style="display:none;margin-top:8px;">
           <button class="btn btn-secondary" onclick="clearSignature()">✕ Прибрати підпис</button>
         </div>
       </div>
+
       <div class="field">
-        <label>🏅 Логотип спонсора (зображення, зберігається в браузері)</label>
-        <input type="file" id="sponsorLogoFile" accept="image/*">
-        <label for="sponsorLogoFile" class="file-label" id="sponsorLogoLabel">Обрати логотип</label>
-        <div class="btn-row" id="sponsorLogoActions" style="display:none;margin-top:8px;">
-          <button class="btn btn-secondary" onclick="clearSponsorLogo()">✕ Прибрати логотип</button>
+        <label>🏅 Логотипи спонсорів (можна вибрати кілька, до 6)</label>
+        <input type="file" id="sponsorLogoFile" accept="image/*" multiple>
+        <label for="sponsorLogoFile" class="file-label" id="sponsorLogoLabel">Додати логотипи</label>
+        <div class="thumbs" id="sponsorThumbs"></div>
+        <div id="sponsorActions" style="display:none;margin-top:10px;">
+          <div style="font-size:.78em;color:var(--text-dim);font-weight:600;margin-bottom:6px;">Де розмістити</div>
+          <div class="orient-btns">
+            <button class="orient-btn" id="logoPosTop" onclick="setLogoPos('top')">⬆ Зверху</button>
+            <button class="orient-btn" id="logoPosBottom" onclick="setLogoPos('bottom')">⬇ Знизу</button>
+            <button class="orient-btn" id="logoPosSide" onclick="setLogoPos('side')">⬅ Збоку</button>
+          </div>
+          <div class="btn-row" style="margin-top:8px;">
+            <button class="btn btn-secondary" onclick="clearSponsorLogos()">✕ Прибрати всі логотипи</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>🖼️ Афіша турніру — фон грамоти</label>
+        <input type="file" id="posterFile" accept="image/*">
+        <label for="posterFile" class="file-label" id="posterLabel">Обрати афішу</label>
+        <div id="posterActions" style="display:none;margin-top:8px;">
+          <div class="range-row">
+            <span>Прозорість афіші</span>
+            <input type="range" id="posterOpacity" min="8" max="80" value="25" oninput="setPosterOpacity(this.value)">
+            <span id="posterOpacityVal">25%</span>
+          </div>
+          <div class="btn-row" style="margin-top:8px;">
+            <button class="btn btn-secondary" onclick="clearPoster()">✕ Прибрати афішу</button>
+          </div>
         </div>
       </div>
 
@@ -301,15 +364,17 @@
       </div>
       <div class="cert-wrap">
         <div class="cert" id="certTemplate" style="--c-accent:#d4af37;--c-accent2:#9d8330;">
+          <div class="cert-poster" id="cPoster"></div>
           <div class="cert-watermark">♞</div>
           <span class="cert-corner tl">♜</span><span class="cert-corner tr">♞</span>
           <span class="cert-corner bl">♝</span><span class="cert-corner br">♛</span>
-          <img class="cert-sponsor-logo" id="cSponsorLogo" alt="">
+          <div class="sp-side" id="cSponsorsSide"></div>
           <img class="cert-qr" id="cQR" alt="">
           <div class="cert-inner">
             <div class="cert-head">
               <div class="cert-org" id="cOrg">КЗ ДЮСШ "ДЕБЮТ"</div>
               <div class="cert-topline">♟ ♞ ♝ ♜ ♛ ♚ ♛ ♜ ♝ ♞ ♟</div>
+              <div class="sp-row" id="cSponsorsTop"></div>
             </div>
             <div class="cert-mid">
               <div class="cert-medal" id="cMedal">★</div>
@@ -322,10 +387,12 @@
             </div>
             <div class="cert-foot">
               <div class="cert-fcol">
-                <img class="cert-sign-img" id="cSignature" alt="">
-                <div class="cert-fline" id="cArbiter">Головний арбітр</div>
+                <div class="sigwrap">
+                  <img class="cert-sign-img" id="cSignature" alt="">
+                  <div class="cert-fline" id="cArbiter">Головний арбітр</div>
+                </div>
               </div>
-              <div class="cert-fcol cert-seal">♚</div>
+              <div class="cert-fcol cert-fmid"><span class="cert-seal" id="cSealGlyph">♚</span><div class="sp-row" id="cSponsorsBottom"></div></div>
               <div class="cert-fcol"><div class="cert-fline" id="cDate">Дата</div></div>
             </div>
           </div>
@@ -472,46 +539,63 @@ document.getElementById('mOrg').addEventListener('input', e=>{
 
 let state = { tournament:{}, players:[], contacts:[] };
 
-/* ====== ПІДПИС ТА ЛОГОТИП (зберігаються в localStorage браузера) ====== */
-let signatureImg = null;
-let sponsorLogoImg = null;
-try{ signatureImg = localStorage.getItem('scs_signature') || null; }catch(err){}
-try{ sponsorLogoImg = localStorage.getItem('scs_sponsorLogo') || null; }catch(err){}
+/* ====== ПІДПИС СУДДІ, ЛОГОТИПИ СПОНСОРІВ, АФІША (зберігаються в localStorage браузера) ====== */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(err){ return null; } }
+let signatureImg = lsGet('scs_signature') || null;
+let sponsorLogos = [];
+try{ sponsorLogos = JSON.parse(lsGet('scs_sponsorLogos') || '[]'); if(!Array.isArray(sponsorLogos)) sponsorLogos=[]; }catch(err){ sponsorLogos=[]; }
+const _oldLogo = lsGet('scs_sponsorLogo');           // міграція зі старої версії (один логотип)
+if(_oldLogo && !sponsorLogos.length) sponsorLogos=[_oldLogo];
+let posterImg = lsGet('scs_poster') || null;
+let assetPrefs = { logoPos:'top', posterOpacity:25 };
+try{ Object.assign(assetPrefs, JSON.parse(lsGet('scs_assetPrefs') || '{}')); }catch(err){}
+const MAX_LOGOS = 6;
 
-function readImageAsDataUrl(file){
+function saveToLocalStorage(key, value){
+  try{ localStorage.setItem(key, value); return true; }
+  catch(err){ console.warn('localStorage недоступний або переповнений:', err); return false; }
+}
+function saveAssetPrefs(){ saveToLocalStorage('scs_assetPrefs', JSON.stringify(assetPrefs)); }
+function warnNotSaved(what){
+  alert(what+' додано, але браузер не зміг його зберегти (немає місця) — доведеться додати знову наступного разу. Спробуйте менше зображення.');
+}
+
+/* стиснення зображення: менші файли = гарантовано влізуть у localStorage */
+function loadImageFromFile(file){
   return new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result);
-    r.onerror=rej;
-    r.readAsDataURL(file);
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{ URL.revokeObjectURL(url); res(img); };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('Не вдалося прочитати зображення')); };
+    img.src=url;
   });
 }
-function saveToLocalStorage(key, value){
-  try{
-    localStorage.setItem(key, value);
-    return true;
-  }catch(err){
-    console.warn('localStorage недоступний або переповнений:', err);
-    return false;
-  }
+async function fileToCompressedDataUrl(file, maxDim, asJpeg, quality){
+  const img=await loadImageFromFile(file);
+  const nw=img.naturalWidth||300, nh=img.naturalHeight||300;
+  const k=Math.min(1, maxDim/Math.max(nw,nh));
+  const w=Math.max(1,Math.round(nw*k)), h=Math.max(1,Math.round(nh*k));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  if(asJpeg){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); }
+  ctx.drawImage(img,0,0,w,h);
+  return asJpeg ? c.toDataURL('image/jpeg',quality) : c.toDataURL('image/png');
 }
 
+/* --- підпис судді --- */
 document.getElementById('signatureFile').addEventListener('change', async e=>{
   const f=e.target.files[0]; if(!f) return;
   try{
-    signatureImg = await readImageAsDataUrl(f);
-    const saved = saveToLocalStorage('scs_signature', signatureImg);
-    if(!saved) alert('Підпис завантажено, але файл завеликий і не зберігся в браузері — доведеться завантажити його знову наступного разу. Спробуйте менше зображення.');
-    updateSignatureUI();
-    renderPreview();
-  }catch(err){ console.error(err); }
+    signatureImg = await fileToCompressedDataUrl(f, 700, false);
+    if(!saveToLocalStorage('scs_signature', signatureImg)) warnNotSaved('Підпис');
+    updateSignatureUI(); renderPreview();
+  }catch(err){ console.error(err); alert(err.message); }
 });
 function clearSignature(){
   signatureImg=null;
   try{ localStorage.removeItem('scs_signature'); }catch(err){}
   document.getElementById('signatureFile').value='';
-  updateSignatureUI();
-  renderPreview();
+  updateSignatureUI(); renderPreview();
 }
 function updateSignatureUI(){
   const l=document.getElementById('signatureLabel');
@@ -520,38 +604,107 @@ function updateSignatureUI(){
   else{ l.textContent='Обрати підпис'; l.classList.remove('loaded'); act.style.display='none'; }
 }
 
-document.getElementById('sponsorLogoFile').addEventListener('change', async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  try{
-    sponsorLogoImg = await readImageAsDataUrl(f);
-    const saved = saveToLocalStorage('scs_sponsorLogo', sponsorLogoImg);
-    if(!saved) alert('Логотип завантажено, але файл завеликий і не зберігся в браузері — доведеться завантажити його знову наступного разу. Спробуйте менше зображення.');
-    updateSponsorLogoUI();
-    renderPreview();
-  }catch(err){ console.error(err); }
-});
-function clearSponsorLogo(){
-  sponsorLogoImg=null;
+/* --- логотипи спонсорів (кілька) --- */
+function persistLogos(){
   try{ localStorage.removeItem('scs_sponsorLogo'); }catch(err){}
-  document.getElementById('sponsorLogoFile').value='';
-  updateSponsorLogoUI();
-  renderPreview();
+  return saveToLocalStorage('scs_sponsorLogos', JSON.stringify(sponsorLogos));
+}
+document.getElementById('sponsorLogoFile').addEventListener('change', async e=>{
+  const files=Array.from(e.target.files||[]); if(!files.length) return;
+  try{
+    for(const f of files){
+      if(sponsorLogos.length>=MAX_LOGOS){ alert('Максимум '+MAX_LOGOS+' логотипів.'); break; }
+      sponsorLogos.push(await fileToCompressedDataUrl(f, 420, false));
+    }
+    if(!persistLogos()) warnNotSaved('Логотипи');
+    updateSponsorLogoUI(); renderPreview();
+  }catch(err){ console.error(err); alert(err.message); }
+  e.target.value='';
+});
+function removeSponsorLogo(i){
+  sponsorLogos.splice(i,1);
+  persistLogos(); updateSponsorLogoUI(); renderPreview();
+}
+function clearSponsorLogos(){
+  sponsorLogos=[]; persistLogos();
+  updateSponsorLogoUI(); renderPreview();
+}
+function setLogoPos(p){
+  assetPrefs.logoPos=p; saveAssetPrefs();
+  updateSponsorLogoUI(); renderPreview();
 }
 function updateSponsorLogoUI(){
   const l=document.getElementById('sponsorLogoLabel');
-  const act=document.getElementById('sponsorLogoActions');
-  if(sponsorLogoImg){ l.textContent='✓ Логотип завантажено'; l.classList.add('loaded'); act.style.display='flex'; }
-  else{ l.textContent='Обрати логотип'; l.classList.remove('loaded'); act.style.display='none'; }
+  const act=document.getElementById('sponsorActions');
+  const th=document.getElementById('sponsorThumbs');
+  th.innerHTML=sponsorLogos.map((src,i)=>
+    `<div class="thumb"><img src="${src}" alt=""><button title="Прибрати" onclick="removeSponsorLogo(${i})">✕</button></div>`).join('');
+  if(sponsorLogos.length){ l.textContent='✓ Логотипів: '+sponsorLogos.length+' — додати ще'; l.classList.add('loaded'); act.style.display='block'; }
+  else{ l.textContent='Додати логотипи'; l.classList.remove('loaded'); act.style.display='none'; }
+  ['Top','Bottom','Side'].forEach(n=>
+    document.getElementById('logoPos'+n).classList.toggle('active', assetPrefs.logoPos===n.toLowerCase()));
 }
+
+/* --- афіша турніру (фон) --- */
+document.getElementById('posterFile').addEventListener('change', async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    posterImg = await fileToCompressedDataUrl(f, 1600, true, 0.82);
+    if(!saveToLocalStorage('scs_poster', posterImg)) warnNotSaved('Афішу');
+    updatePosterUI(); renderPreview();
+  }catch(err){ console.error(err); alert(err.message); }
+});
+function clearPoster(){
+  posterImg=null;
+  try{ localStorage.removeItem('scs_poster'); }catch(err){}
+  document.getElementById('posterFile').value='';
+  updatePosterUI(); renderPreview();
+}
+function setPosterOpacity(v){
+  assetPrefs.posterOpacity=Math.max(5,Math.min(100,parseInt(v)||25));
+  document.getElementById('posterOpacityVal').textContent=assetPrefs.posterOpacity+'%';
+  saveAssetPrefs();
+  syncCertImages();            // лише оновити прозорість, без повного перерендеру
+}
+function updatePosterUI(){
+  const l=document.getElementById('posterLabel');
+  const act=document.getElementById('posterActions');
+  document.getElementById('posterOpacity').value=assetPrefs.posterOpacity;
+  document.getElementById('posterOpacityVal').textContent=assetPrefs.posterOpacity+'%';
+  if(posterImg){ l.textContent='✓ Афішу завантажено'; l.classList.add('loaded'); act.style.display='block'; }
+  else{ l.textContent='Обрати афішу'; l.classList.remove('loaded'); act.style.display='none'; }
+}
+
+/* --- застосування на грамоті --- */
 function syncCertImages(){
   const cert=document.getElementById('certTemplate');
+
   const signEl=document.getElementById('cSignature');
-  if(signatureImg){ signEl.src=signatureImg; signEl.style.display='block'; }
+  if(signatureImg){ if(signEl.getAttribute('src')!==signatureImg) signEl.src=signatureImg; signEl.style.display='block'; }
   else{ signEl.style.display='none'; signEl.removeAttribute('src'); }
-  const logoEl=document.getElementById('cSponsorLogo');
-  if(sponsorLogoImg){ logoEl.src=sponsorLogoImg; logoEl.style.display='block'; }
-  else{ logoEl.style.display='none'; logoEl.removeAttribute('src'); }
-  cert.classList.toggle('has-logo', !!sponsorLogoImg);
+
+  const posterEl=document.getElementById('cPoster');
+  if(posterImg){
+    if(posterEl.dataset.src!==posterImg){ posterEl.style.backgroundImage='url("'+posterImg+'")'; posterEl.dataset.src=posterImg; }
+    posterEl.style.opacity=(assetPrefs.posterOpacity/100);
+    posterEl.style.display='block';
+  }else{ posterEl.style.display='none'; posterEl.style.backgroundImage='none'; posterEl.dataset.src=''; }
+  cert.classList.toggle('has-poster', !!posterImg);
+  cert.classList.toggle('has-sign', !!signatureImg);
+  cert.classList.toggle('logos-top', sponsorLogos.length>0 && assetPrefs.logoPos==='top');
+  cert.classList.toggle('logos-bottom', sponsorLogos.length>0 && assetPrefs.logoPos==='bottom');
+
+  const key=assetPrefs.logoPos+'|'+sponsorLogos.map(s=>s.length).join(',');
+  const html=sponsorLogos.map(src=>`<img class="sp-logo" src="${src}" alt="">`).join('');
+  [['Top','top','flex'],['Bottom','bottom','flex'],['Side','side','flex']].forEach(([n,pos,disp])=>{
+    const el=document.getElementById('cSponsors'+n);
+    const active = sponsorLogos.length>0 && assetPrefs.logoPos===pos;
+    if(active){
+      if(el.dataset.key!==key){ el.innerHTML=html; el.dataset.key=key; }
+      el.style.display=disp;
+    }else{ el.innerHTML=''; el.dataset.key=''; el.style.display='none'; }
+  });
+
   const qrEl=document.getElementById('cQR');
   if(qrDataUrl){ qrEl.src=qrDataUrl; qrEl.style.display='block'; }
   else{ qrEl.style.display='none'; qrEl.removeAttribute('src'); }
@@ -1082,6 +1235,7 @@ document.getElementById('medalCircle').classList.toggle('active', currentMedalSh
 document.getElementById('medalRibbon').classList.toggle('active', currentMedalShape==='ribbon');
 updateSignatureUI();
 updateSponsorLogoUI();
+updatePosterUI();
 syncCertImages();
 </script>
 </body>
