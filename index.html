@@ -382,7 +382,7 @@
               <div class="cert-type" id="cType">ЗА УЧАСТЬ</div>
               <div class="cert-divider">♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜</div>
               <div class="cert-sub">нагороджується</div>
-              <div class="cert-name" id="cName">Прізвище, Ім'я</div>
+              <div class="cert-name" id="cName">Прізвище Ім'я</div>
               <div class="cert-desc" id="cDesc">За участь у турнірі та продемонстровані навички гри в шахи</div>
             </div>
             <div class="cert-foot">
@@ -850,7 +850,7 @@ function parseResults(wb){
 
     players.push({
       lastName, firstName,
-      fullName:`${lastName}, ${firstName}`,
+      fullName:`${lastName} ${firstName}`,
       place,
       score:(row[scoreCol]||'').trim(),
       category: categoryCol>=0 ? (row[categoryCol]||'').trim() : '',
@@ -989,7 +989,7 @@ function applyCert(p, meta, typeOverride){
   // вміст
   document.getElementById('cMedal').textContent=cfg.medal;
   document.getElementById('cType').textContent=cfg.label;
-  document.getElementById('cName').textContent=p?p.fullName:"Прізвище, Ім'я";
+  document.getElementById('cName').textContent=p?p.fullName:"Прізвище Ім'я";
   document.getElementById('cOrg').textContent=(meta.org?meta.org.toUpperCase():'КЗ ДЮСШ "ДЕБЮТ"');
   document.getElementById('cArbiter').textContent='Гол. арбітр: '+(meta.arbiter||'—');
   document.getElementById('cDate').textContent='Дата: '+(meta.date||new Date().toLocaleDateString('uk-UA'));
