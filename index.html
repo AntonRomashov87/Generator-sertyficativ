@@ -232,23 +232,38 @@
   .cert.style-kids::before{border-width:3px;border-radius:14px;}
   .cert.style-kids .cert-medal{border-radius:50%;transform:rotate(-6deg);}
   .cert.style-kids .cert-title{letter-spacing:1px;}
+  .cert.style-kids .cert-desc{font-size:clamp(8px,1.38vw,12px);}
+  .cert.style-kids.medal-ribbon .cert-medal{transform:none;}
 
-  /* ===== ФОРМА МЕДАЛІ: СТРІЧКА ===== */
+  /* ===== ФОРМА МЕДАЛІ: УРОЧИСТА СТРІЧКА ===== */
   .cert-medal{position:relative;}
+  .cert-mid{position:relative;z-index:0;}
+  .cert-title{position:relative;z-index:1;}
+  .cert.medal-ribbon .cert-medal{
+    --rb1:var(--c-accent,#d4af37); --rb2:var(--c-accent2,#9d8330); --rbs:rgba(255,255,255,.85);
+    --rib:linear-gradient(90deg,var(--rb2) 0%,var(--rb1) 11%,var(--rbs) 12%,var(--rbs) 17%,var(--rb1) 18%,
+      var(--rb1) 82%,var(--rbs) 83%,var(--rbs) 88%,var(--rb1) 89%,var(--rb2) 100%);
+    box-shadow:0 0 0 2px var(--c-accent2,#9d8330),0 0 0 4px rgba(255,255,255,.75),0 4px 12px rgba(0,0,0,.35);
+    border-color:rgba(255,255,255,.6);
+  }
   .cert.medal-ribbon .cert-medal::before,
   .cert.medal-ribbon .cert-medal::after{
-    content:'';position:absolute;top:62%;width:42%;height:1.9em;
-    background:linear-gradient(135deg,var(--c-accent,#d4af37),var(--c-accent2,#9d8330));
-    z-index:-1;
+    content:'';position:absolute;top:55%;width:50%;height:2.05em;z-index:-1;transform-origin:50% 0;
+    background:linear-gradient(180deg,rgba(255,255,255,.30) 0%,rgba(0,0,0,.25) 100%), var(--rib);
+    clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);
   }
-  .cert.medal-ribbon .cert-medal::before{
-    left:-20%;transform:rotate(14deg);
-    clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
-  }
-  .cert.medal-ribbon .cert-medal::after{
-    right:-20%;transform:rotate(-14deg);
-    clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);
-  }
+  .cert.medal-ribbon .cert-medal::before{left:6%;transform:rotate(13deg);}
+  .cert.medal-ribbon .cert-medal::after{right:6%;transform:rotate(-13deg);}
+  .cert.medal-ribbon .cert-medal{margin-bottom:clamp(6px,1.3vw,12px);}
+  /* пергамент: бордово-золоті стрічки */
+  .cert.style-parchment.medal-ribbon .cert-medal{--rb1:#a3302a;--rb2:#6b1a16;--rbs:#d9b44a;}
+  /* дитячий: яскраві стрічки */
+  .cert.style-kids.medal-ribbon .cert-medal{--rb1:#e8584a;--rb2:#b8352a;--rbs:#ffe27a;}
+  /* сучасний: стрічки в тон акценту, тонші */
+  .cert.style-modern.medal-ribbon .cert-medal{--rbs:rgba(255,255,255,.6);}
+
+  /* горизонтальна грамота: опускаємо вміст на пару міліметрів, щоб медаль не заходила на ряд фігур */
+  .cert:not(.portrait) .cert-mid{padding-top:clamp(10px,1.8vw,16px);}
 </style>
 </head>
 <body>
