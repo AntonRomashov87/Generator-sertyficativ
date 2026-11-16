@@ -72,60 +72,61 @@
   /* ===== СЕРТИФІКАТ ===== */
   .cert-wrap{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);}
   .cert{
+    --u:1px; /* 1 "одиниця дизайну" = 1/760 ширини грамоти; виставляється з JS */
     width:100%;aspect-ratio:297/210;position:relative;
     background:
       /* шаховий патерн у клітинку, дуже делікатний */
-      repeating-conic-gradient(var(--c-tint,rgba(212,175,55,.045)) 0% 25%, transparent 0% 50%) 0 0 / var(--sq,26px) var(--sq,26px),
+      repeating-conic-gradient(var(--c-tint,rgba(212,175,55,.045)) 0% 25%, transparent 0% 50%) 0 0 / var(--sq,calc(26 * var(--u))) var(--sq,calc(26 * var(--u))),
       linear-gradient(135deg, var(--c-bg1,#fdfbf3) 0%, var(--c-bg2,#f4efe0) 100%);
     color:var(--c-ink,#1e2b22);
     font-family:Georgia,'Times New Roman',serif;
-    border:10px solid var(--c-frame,#12211a);overflow:hidden;
+    border:calc(10 * var(--u)) solid var(--c-frame,#12211a);overflow:hidden;
   }
   /* вертикальна орієнтація */
   .cert.portrait{aspect-ratio:210/297;}
   /* декоративні рамки */
-  .cert::before{content:'';position:absolute;inset:12px;border:2px solid var(--c-accent,#d4af37);border-radius:3px;pointer-events:none;z-index:1;}
-  .cert::after{content:'';position:absolute;inset:18px;border:1px solid rgba(30,43,34,.22);pointer-events:none;z-index:1;}
+  .cert::before{content:'';position:absolute;inset:calc(12 * var(--u));border:2px solid var(--c-accent,#d4af37);border-radius:calc(3 * var(--u));pointer-events:none;z-index:1;}
+  .cert::after{content:'';position:absolute;inset:calc(18 * var(--u));border:1px solid rgba(30,43,34,.22);pointer-events:none;z-index:1;}
 
   /* внутрішній блок з трьома зонами — flex, без absolute-накладань */
-  .cert-inner{position:absolute;inset:26px;display:flex;flex-direction:column;
+  .cert-inner{position:absolute;inset:calc(26 * var(--u));display:flex;flex-direction:column;
     align-items:center;text-align:center;z-index:2;padding:2% 4%;}
 
   /* водяний знак-кінь по центру */
   .cert-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-48%);
-    font-size:clamp(120px,32vw,260px);color:var(--c-accent,#d4af37);opacity:.06;
+    font-size:calc(260 * var(--u));color:var(--c-accent,#d4af37);opacity:.06;
     z-index:0;pointer-events:none;line-height:1;}
 
   /* кутові шахові фігури */
-  .cert-corner{position:absolute;font-size:clamp(16px,3.2vw,30px);color:var(--c-accent,#d4af37);opacity:.55;z-index:2;}
-  .cert-corner.tl{top:26px;left:30px;} .cert-corner.tr{top:26px;right:30px;transform:scaleX(-1);}
-  .cert-corner.bl{bottom:26px;left:30px;transform:scaleY(-1);} .cert-corner.br{bottom:26px;right:30px;transform:scale(-1,-1);}
+  .cert-corner{position:absolute;font-size:calc(30 * var(--u));color:var(--c-accent,#d4af37);opacity:.55;z-index:2;}
+  .cert-corner.tl{top:calc(26 * var(--u));left:calc(30 * var(--u));} .cert-corner.tr{top:calc(26 * var(--u));right:calc(30 * var(--u));transform:scaleX(-1);}
+  .cert-corner.bl{bottom:calc(26 * var(--u));left:calc(30 * var(--u));transform:scaleY(-1);} .cert-corner.br{bottom:calc(26 * var(--u));right:calc(30 * var(--u));transform:scale(-1,-1);}
 
   /* ЗОНА 1 — шапка */
   .cert-head{flex:0 0 auto;width:100%;}
-  .cert-org{font-size:clamp(9px,1.6vw,13px);letter-spacing:2px;text-transform:uppercase;color:var(--c-accent2,#9d8330);font-weight:bold;}
-  .cert-topline{font-size:clamp(9px,1.7vw,14px);color:var(--c-accent,#d4af37);letter-spacing:3px;margin-top:4px;opacity:.75;}
+  .cert-org{font-size:calc(13 * var(--u));letter-spacing:calc(2 * var(--u));text-transform:uppercase;color:var(--c-accent2,#9d8330);font-weight:bold;}
+  .cert-topline{font-size:calc(14 * var(--u));color:var(--c-accent,#d4af37);letter-spacing:calc(3 * var(--u));margin-top:calc(4 * var(--u));opacity:.75;}
 
   /* ЗОНА 2 — центр (займає весь вільний простір, вміст центрований) */
   .cert-mid{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:0;gap:1.5%;}
-  .cert-medal{width:clamp(30px,6vw,48px);height:clamp(30px,6vw,48px);border-radius:50%;
+  .cert-medal{width:calc(48 * var(--u));height:calc(48 * var(--u));border-radius:50%;
     background:linear-gradient(135deg,var(--c-accent,#d4af37),var(--c-accent2,#9d8330));
     display:flex;align-items:center;justify-content:center;color:#fff;
-    font-size:clamp(15px,3.4vw,26px);box-shadow:0 2px 8px rgba(0,0,0,.2);flex-shrink:0;
+    font-size:calc(26 * var(--u));box-shadow:0 calc(2 * var(--u)) calc(8 * var(--u)) rgba(0,0,0,.2);flex-shrink:0;
     border:2px solid rgba(255,255,255,.35);}
-  .cert-title{font-size:clamp(20px,5vw,42px);font-weight:bold;letter-spacing:2px;color:var(--c-ink,#12211a);line-height:1;}
-  .cert-type{font-size:clamp(10px,2.3vw,18px);color:var(--c-accent2,#9d8330);font-weight:bold;letter-spacing:1px;}
-  .cert-divider{font-size:clamp(9px,1.9vw,15px);color:var(--c-accent,#d4af37);letter-spacing:4px;opacity:.7;}
-  .cert-sub{font-size:clamp(9px,1.5vw,12px);color:#5a6b5f;}
-  .cert-name{font-size:clamp(17px,4vw,32px);font-weight:bold;color:var(--c-ink,#12211a);padding-bottom:1%;border-bottom:2px solid var(--c-accent,#d4af37);}
-  .cert-desc{font-size:clamp(8px,1.55vw,13px);color:#3a4a40;max-width:94%;line-height:1.4;}
+  .cert-title{font-size:calc(42 * var(--u));font-weight:bold;letter-spacing:calc(2 * var(--u));color:var(--c-ink,#12211a);line-height:1;}
+  .cert-type{font-size:calc(18 * var(--u));color:var(--c-accent2,#9d8330);font-weight:bold;letter-spacing:1px;}
+  .cert-divider{font-size:calc(15 * var(--u));color:var(--c-accent,#d4af37);letter-spacing:calc(4 * var(--u));opacity:.7;}
+  .cert-sub{font-size:calc(12 * var(--u));color:#5a6b5f;}
+  .cert-name{font-size:calc(32 * var(--u));font-weight:bold;color:var(--c-ink,#12211a);padding-bottom:1%;border-bottom:2px solid var(--c-accent,#d4af37);}
+  .cert-desc{font-size:calc(13 * var(--u));color:#3a4a40;max-width:94%;line-height:1.4;}
 
   /* ЗОНА 3 — футер (притиснутий до низу flex-ом, БЕЗ absolute) */
   .cert-foot{flex:0 0 auto;width:100%;display:flex;justify-content:space-between;align-items:flex-end;
-    font-size:clamp(8px,1.35vw,12px);color:#4a5a50;padding-top:2%;}
+    font-size:calc(12 * var(--u));color:#4a5a50;padding-top:2%;}
   .cert-fcol{text-align:center;flex:1;}
-  .cert-fline{border-top:1px solid #8a9a90;padding-top:4px;margin-top:18px;}
-  .cert-seal{font-size:clamp(14px,3vw,26px);color:var(--c-accent,#d4af37);opacity:.7;}
+  .cert-fline{border-top:1px solid #8a9a90;padding-top:calc(4 * var(--u));margin-top:calc(18 * var(--u));}
+  .cert-seal{font-size:calc(26 * var(--u));color:var(--c-accent,#d4af37);opacity:.7;}
 
   /* панель вибору вигляду */
   .style-panel{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;background:var(--panel2);border-radius:8px;}
@@ -140,12 +141,12 @@
   .orient-btn.active{border-color:var(--gold);color:var(--gold);}
 
   /* підпис судді — великий, лягає на лінію підпису */
-  .cert{--sig-h:clamp(45px,5.85vw,66px);}
-  .sigwrap{position:relative;margin-top:18px;}
+  .cert{--sig-h:calc(66 * var(--u));}
+  .sigwrap{position:relative;margin-top:calc(18 * var(--u));}
   .sigwrap .cert-fline{margin-top:0;}
-  .cert-sign-img{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% - 4px);
+  .cert-sign-img{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% - calc(4 * var(--u)));
     height:var(--sig-h);width:auto;max-width:170%;object-fit:contain;z-index:3;}
-  .cert.has-sign .sigwrap{margin-top:calc(var(--sig-h) - 12px);}
+  .cert.has-sign .sigwrap{margin-top:calc(var(--sig-h) - calc(12 * var(--u)));}
   .cert.has-sign .cert-mid{gap:.5%;}
 
   /* афіша турніру як фон */
@@ -156,23 +157,23 @@
     background:radial-gradient(closest-side, rgba(255,255,255,.85) 0%, rgba(255,255,255,.62) 65%, rgba(255,255,255,0) 100%);}
 
   /* логотипи спонсорів */
-  .sp-row{display:none;align-items:center;justify-content:center;gap:clamp(6px,1.4vw,14px);flex-wrap:wrap;width:100%;}
-  .cert-head .sp-row{margin-top:2px;}
+  .sp-row{display:none;align-items:center;justify-content:center;gap:calc(14 * var(--u));flex-wrap:wrap;width:100%;}
+  .cert-head .sp-row{margin-top:calc(2 * var(--u));}
   .cert.logos-top .cert-topline{display:none;}
   .cert.logos-top .cert-divider{display:none;}
   .cert.logos-bottom .cert-seal{display:none;}
   .cert.logos-bottom .cert-fmid{flex:1.8;}
   .cert.logos-bottom .cert-sign-img{max-width:135%;}
   .cert{--ls:1;}
-  #cSponsorsTop .sp-logo{height:calc(clamp(24px,4.4vw,40px) * var(--ls));max-width:calc(clamp(80px,16vw,150px) * var(--ls));}
+  #cSponsorsTop .sp-logo{height:calc(calc(40 * var(--u)) * var(--ls));max-width:calc(calc(150 * var(--u)) * var(--ls));}
   /* знизу: логотипи ділять ширину центральної колонки порівну, не переносяться */
-  #cSponsorsBottom{gap:clamp(4px,1vw,10px);flex-wrap:nowrap;}
-  #cSponsorsBottom .sp-logo{flex:1 1 0;min-width:0;max-width:none;width:0;height:calc(clamp(24px,4.2vw,38px) * var(--ls));padding:2px 4px;}
-  .sp-side{display:none;position:absolute;left:26px;top:22%;
-    flex-direction:column;align-items:center;gap:8px;z-index:3;}
-  .sp-logo{height:clamp(18px,4.2vw,34px);width:auto;max-width:clamp(50px,12vw,110px);object-fit:contain;
-    background:rgba(255,255,255,.85);border-radius:4px;padding:2px 5px;}
-  .sp-side .sp-logo{height:auto;max-height:calc(clamp(38px,7vw,64px) * var(--ls));max-width:calc(clamp(60px,11vw,100px) * var(--ls));}
+  #cSponsorsBottom{gap:calc(10 * var(--u));flex-wrap:nowrap;}
+  #cSponsorsBottom .sp-logo{flex:1 1 0;min-width:0;max-width:none;width:0;height:calc(calc(38 * var(--u)) * var(--ls));padding:calc(2 * var(--u)) calc(4 * var(--u));}
+  .sp-side{display:none;position:absolute;left:calc(26 * var(--u));top:22%;
+    flex-direction:column;align-items:center;gap:calc(8 * var(--u));z-index:3;}
+  .sp-logo{height:calc(34 * var(--u));width:auto;max-width:calc(110 * var(--u));object-fit:contain;
+    background:rgba(255,255,255,.85);border-radius:calc(4 * var(--u));padding:calc(2 * var(--u)) calc(5 * var(--u));}
+  .sp-side .sp-logo{height:auto;max-height:calc(calc(64 * var(--u)) * var(--ls));max-width:calc(calc(100 * var(--u)) * var(--ls));}
 
   /* мініатюри у формі завантаження */
   .thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
@@ -182,8 +183,8 @@
     background:#c0392b;color:#fff;font-size:11px;line-height:18px;cursor:pointer;padding:0;}
   .range-row{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:.82em;color:var(--text-dim);}
   .range-row input[type=range]{flex:1;}
-  .cert-qr{display:none;position:absolute;bottom:14px;right:14px;width:48px;height:48px;
-    object-fit:contain;z-index:3;background:#fff;border-radius:4px;padding:3px;}
+  .cert-qr{display:none;position:absolute;bottom:calc(14 * var(--u));right:calc(14 * var(--u));width:calc(48 * var(--u));height:calc(48 * var(--u));
+    object-fit:contain;z-index:3;background:#fff;border-radius:calc(4 * var(--u));padding:calc(3 * var(--u));}
   /* коли лого/QR присутні — ховаємо кутові шахові фігурки, щоб не накладались */
   .cert.has-qr .cert-corner.br{display:none;}
 
@@ -201,11 +202,11 @@
     font-family:'Palatino Linotype',Georgia,serif;
   }
   .cert.style-parchment::before{border-color:#8a5a2a;border-width:1px;}
-  .cert.style-parchment::after{border-style:double;border-width:3px;border-color:rgba(90,58,20,.35);}
+  .cert.style-parchment::after{border-style:double;border-width:calc(3 * var(--u));border-color:rgba(90,58,20,.35);}
   .cert.style-parchment .cert-medal{
     border-radius:50%;
     background:radial-gradient(circle at 35% 30%, #c0392b, #7b241c 70%);
-    box-shadow:0 2px 8px rgba(0,0,0,.3), inset 0 0 0 3px rgba(212,175,55,.55);
+    box-shadow:0 calc(2 * var(--u)) calc(8 * var(--u)) rgba(0,0,0,.3), inset 0 0 0 calc(3 * var(--u)) rgba(212,175,55,.55);
   }
 
   /* Сучасний мінімалізм: без патерну й водяного знаку, тонкі лінії */
@@ -217,22 +218,22 @@
   .cert.style-modern .cert-corner,
   .cert.style-modern .cert-topline,
   .cert.style-modern .cert-divider{display:none;}
-  .cert.style-modern::before{border-width:1px;inset:16px;}
+  .cert.style-modern::before{border-width:1px;inset:calc(16 * var(--u));}
   .cert.style-modern::after{display:none;}
-  .cert.style-modern .cert-medal{border-radius:10px;}
+  .cert.style-modern .cert-medal{border-radius:calc(10 * var(--u));}
 
   /* Дитячий: яскравіше, грайливіше */
   .cert.style-kids{
     background:
-      repeating-conic-gradient(var(--c-tint,rgba(212,175,55,.08)) 0% 25%, transparent 0% 50%) 0 0 / 22px 22px,
+      repeating-conic-gradient(var(--c-tint,rgba(212,175,55,.08)) 0% 25%, transparent 0% 50%) 0 0 / calc(22 * var(--u)) calc(22 * var(--u)),
       linear-gradient(135deg, #fff9e8 0%, #fdeeca 100%);
     font-family:'Comic Sans MS','Segoe UI',sans-serif;
   }
-  .cert.style-kids .cert-corner{font-size:clamp(22px,4.2vw,40px);opacity:.8;}
-  .cert.style-kids::before{border-width:3px;border-radius:14px;}
+  .cert.style-kids .cert-corner{font-size:calc(40 * var(--u));opacity:.8;}
+  .cert.style-kids::before{border-width:calc(3 * var(--u));border-radius:calc(14 * var(--u));}
   .cert.style-kids .cert-medal{border-radius:50%;transform:rotate(-6deg);}
   .cert.style-kids .cert-title{letter-spacing:1px;}
-  .cert.style-kids .cert-desc{font-size:clamp(8px,1.38vw,12px);}
+  .cert.style-kids .cert-desc{font-size:calc(12 * var(--u));}
   .cert.style-kids.medal-ribbon .cert-medal{transform:none;}
 
   /* ===== ФОРМА МЕДАЛІ: УРОЧИСТА СТРІЧКА ===== */
@@ -243,7 +244,7 @@
     --rb1:var(--c-accent,#d4af37); --rb2:var(--c-accent2,#9d8330); --rbs:rgba(255,255,255,.85);
     --rib:linear-gradient(90deg,var(--rb2) 0%,var(--rb1) 11%,var(--rbs) 12%,var(--rbs) 17%,var(--rb1) 18%,
       var(--rb1) 82%,var(--rbs) 83%,var(--rbs) 88%,var(--rb1) 89%,var(--rb2) 100%);
-    box-shadow:0 0 0 2px var(--c-accent2,#9d8330),0 0 0 4px rgba(255,255,255,.75),0 4px 12px rgba(0,0,0,.35);
+    box-shadow:0 0 0 calc(2 * var(--u)) var(--c-accent2,#9d8330),0 0 0 calc(4 * var(--u)) rgba(255,255,255,.75),0 calc(4 * var(--u)) calc(12 * var(--u)) rgba(0,0,0,.35);
     border-color:rgba(255,255,255,.6);
   }
   .cert.medal-ribbon .cert-medal::before,
@@ -254,7 +255,7 @@
   }
   .cert.medal-ribbon .cert-medal::before{left:6%;transform:rotate(13deg);}
   .cert.medal-ribbon .cert-medal::after{right:6%;transform:rotate(-13deg);}
-  .cert.medal-ribbon .cert-medal{margin-bottom:clamp(6px,1.3vw,12px);}
+  .cert.medal-ribbon .cert-medal{margin-bottom:calc(12 * var(--u));}
   /* пергамент: бордово-золоті стрічки */
   .cert.style-parchment.medal-ribbon .cert-medal{--rb1:#a3302a;--rb2:#6b1a16;--rbs:#d9b44a;}
   /* дитячий: яскраві стрічки */
@@ -263,7 +264,7 @@
   .cert.style-modern.medal-ribbon .cert-medal{--rbs:rgba(255,255,255,.6);}
 
   /* горизонтальна грамота: опускаємо вміст на пару міліметрів, щоб медаль не заходила на ряд фігур */
-  .cert:not(.portrait) .cert-mid{padding-top:clamp(10px,1.8vw,16px);}
+  .cert:not(.portrait) .cert-mid{padding-top:calc(16 * var(--u));}
 </style>
 </head>
 <body>
@@ -704,7 +705,17 @@ function updatePosterUI(){
 }
 
 /* --- застосування на грамоті --- */
+/* масштаб: усі розміри грамоти пропорційні її ширині (як на 760px) */
+function fitCert(){
+  const el=document.getElementById('certTemplate'); if(!el) return;
+  const w=el.getBoundingClientRect().width;
+  if(w>50) el.style.setProperty('--u',(w/760).toFixed(4)+'px');
+}
+window.addEventListener('resize',fitCert);
+if(window.ResizeObserver){ document.addEventListener('DOMContentLoaded',()=>{ const el=document.getElementById('certTemplate'); if(el) new ResizeObserver(fitCert).observe(el); }); }
+
 function syncCertImages(){
+  fitCert();
   const cert=document.getElementById('certTemplate');
 
   const signEl=document.getElementById('cSignature');
@@ -1107,7 +1118,7 @@ async function makePdf(player, meta){
   // тип грамоти беремо з самого гравця (кожен свій), а не з селектора перегляду
   applyCert(player, meta, player ? player.type : undefined);
   await new Promise(r=>setTimeout(r,80)); // дати браузеру перемалювати
-  const canvas=await html2canvas(document.getElementById('certTemplate'),{scale:2,useCORS:true,backgroundColor:null});
+  const canvas=await html2canvas(document.getElementById('certTemplate'),{scale:Math.max(2,1800/document.getElementById('certTemplate').offsetWidth),useCORS:true,backgroundColor:null});
   const img=canvas.toDataURL('image/jpeg',0.92);
   const {jsPDF}=window.jspdf;
   const portrait = currentOrient==='portrait';
@@ -1126,7 +1137,7 @@ async function downloadOnePreview(){
 async function captureCertCanvas(player, meta){
   applyCert(player, meta, player ? player.type : undefined);
   await new Promise(r=>setTimeout(r,80));
-  return html2canvas(document.getElementById('certTemplate'),{scale:2,useCORS:true,backgroundColor:null});
+  return html2canvas(document.getElementById('certTemplate'),{scale:Math.max(2,1800/document.getElementById('certTemplate').offsetWidth),useCORS:true,backgroundColor:null});
 }
 
 async function downloadOnePreviewPng(){
